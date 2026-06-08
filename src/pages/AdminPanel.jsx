@@ -1958,7 +1958,7 @@ import toast from "react-hot-toast";
 import AdminAttendance from "./AdminAttendance";
 
 // ✅ BACKEND URL - Add this at the top of the file
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://sjs-backend-new.onrender.com";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -3469,9 +3469,9 @@ const handleInternshipDecline = async (payment) => {
                     const url = selectedRequest.screenshot_url;
                     if (!url) return null;
                     if (url.startsWith('http')) return url;
-                    if (url.startsWith('/uploads')) return `http://localhost:5000${url}`;
-                    if (url.startsWith('app/uploads')) return `http://localhost:5000/${url}`;
-                    return `http://localhost:5000/uploads/screenshots/${url}`;
+                    if (url.startsWith('/uploads')) return `https://sjs-backend-new.onrender.com${url}`;
+                    if (url.startsWith('app/uploads')) return `https://sjs-backend-new.onrender.com/${url}`;
+                    return `https://sjs-backend-new.onrender.com/uploads/screenshots/${url}`;
                   })()}
                   alt="Payment Screenshot"
                   className="w-full max-h-64 object-contain bg-gray-50"
@@ -3539,9 +3539,9 @@ const handleInternshipDecline = async (payment) => {
             // If it's already a full URL
             if (viewImage.startsWith('http')) return viewImage;
             // If it starts with /uploads
-            if (viewImage.startsWith('/uploads')) return `http://localhost:5000${viewImage}`;
+            if (viewImage.startsWith('/uploads')) return `https://sjs-backend-new.onrender.com${viewImage}`;
             // Otherwise, assume it's just a filename
-            return `http://localhost:5000/uploads/screenshots/${viewImage}`;
+            return `https://sjs-backend-new.onrender.com/uploads/screenshots/${viewImage}`;
           })()}
           alt="Payment Screenshot" 
           className="max-w-full max-h-[85vh] object-contain rounded-lg"
@@ -3559,8 +3559,8 @@ const handleInternshipDecline = async (payment) => {
             href={(() => {
               if (!viewImage) return '#';
               if (viewImage.startsWith('http')) return viewImage;
-              if (viewImage.startsWith('/uploads')) return `http://localhost:5000${viewImage}`;
-              return `http://localhost:5000/uploads/screenshots/${viewImage}`;
+              if (viewImage.startsWith('/uploads')) return `https://sjs-backend-new.onrender.com${viewImage}`;
+              return `https://sjs-backend-new.onrender.com/uploads/screenshots/${viewImage}`;
             })()}
             target="_blank" 
             rel="noopener noreferrer"
@@ -3572,8 +3572,8 @@ const handleInternshipDecline = async (payment) => {
             href={(() => {
               if (!viewImage) return '#';
               if (viewImage.startsWith('http')) return viewImage;
-              if (viewImage.startsWith('/uploads')) return `http://localhost:5000${viewImage}`;
-              return `http://localhost:5000/uploads/screenshots/${viewImage}`;
+              if (viewImage.startsWith('/uploads')) return `https://sjs-backend-new.onrender.com${viewImage}`;
+              return `https://sjs-backend-new.onrender.com/uploads/screenshots/${viewImage}`;
             })()}
             download
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
@@ -3771,8 +3771,8 @@ const handleInternshipDecline = async (payment) => {
                     const url = selectedInternshipPayment.screenshot_url;
                     if (!url) return null;
                     if (url.startsWith('http')) return url;
-                    if (url.startsWith('/uploads')) return `http://localhost:5000${url}`;
-                    return `http://localhost:5000/uploads/screenshots/${url}`;
+                    if (url.startsWith('/uploads')) return `https://sjs-backend-new.onrender.com${url}`;
+                    return `https://sjs-backend-new.onrender.com/uploads/screenshots/${url}`;
                   })()}
                   alt="Payment Screenshot"
                   className="w-full max-h-64 object-contain bg-gray-50"

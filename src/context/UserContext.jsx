@@ -325,7 +325,7 @@ export const UserProvider = ({ children }) => {
       if (token) {
         try {
           // ✅ Use verify-token endpoint instead of /user/profile
-          const response = await api.get("/auth/verify-token");
+          const response = await api.get("/api/auth/verify-token");
           if (response.data.valid) {
             const verifiedUser = response.data.user;
             const currentUser = user;
@@ -404,7 +404,7 @@ export const UserProvider = ({ children }) => {
       try {
         api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-        const response = await api.get("/auth/verify-token");
+        const response = await api.get("/api/auth/verify-token");
 
         if (response.data.valid) {
           const verifiedUser = response.data.user;
@@ -532,7 +532,7 @@ export const UserProvider = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      const response = await api.get("/auth/verify-token");
+      const response = await api.get("/api/auth/verify-token");
       if (response.data.valid && response.data.user) {
         const verifiedUser = response.data.user;
         const updatedUser = {
