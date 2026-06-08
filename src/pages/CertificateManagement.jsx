@@ -1,338 +1,3 @@
-// import React, { useState, useEffect } from 'react';
-// import { FaSpinner, FaDownload, FaEye, FaRedo, FaCheckCircle, FaTimesCircle, FaQrcode, FaShare } from 'react-icons/fa';
-// import api from '../services/api';
-// import toast from 'react-hot-toast';
-
-// const CertificateManagement = () => {
-//   const [certificates, setCertificates] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [students, setStudents] = useState([]);
-//   const [courses, setCourses] = useState([]);
-//   const [showGenerateModal, setShowGenerateModal] = useState(false);
-//   const [selectedStudent, setSelectedStudent] = useState('');
-//   const [selectedCourse, setSelectedCourse] = useState('');
-//   const [score, setScore] = useState(100);
-//   const [generating, setGenerating] = useState(false);
-
-//   useEffect(() => {
-//     fetchCertificates();
-//     fetchStudents();
-//     fetchCourses();
-//   }, []);
-
-//   const fetchCertificates = async () => {
-//     setLoading(true);
-//     try {
-//       const response = await api.get('/api/admin/certificates');
-//       if (response.data.success) {
-//         setCertificates(response.data.certificates);
-//       }
-//     } catch (error) {
-//       console.error('Failed to fetch certificates:', error);
-//       toast.error('Failed to load certificates');
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const fetchStudents = async () => {
-//     try {
-//       const response = await api.get('/api/admin/students');
-//       if (response.data.success) {
-//         setStudents(response.data.students);
-//       }
-//     } catch (error) {
-//       console.error('Failed to fetch students:', error);
-//     }
-//   };
-
-//   const fetchCourses = async () => {
-//     try {
-//       const response = await api.get('/api/admin/courses');
-//       if (response.data.success) {
-//         setCourses(response.data.courses);
-//       }
-//     } catch (error) {
-//       console.error('Failed to fetch courses:', error);
-//     }
-//   };
-
-//   const handleGenerateCertificate = async () => {
-//     if (!selectedStudent || !selectedCourse) {
-//       toast.error('Please select student and course');
-//       return;
-//     }
-
-//     setGenerating(true);
-//     try {
-//       const response = await api.post('/api/certificates/generate', {
-//         student_id: parseInt(selectedStudent),
-//         course_id: parseInt(selectedCourse),
-//         score: score
-//       });
-
-//       if (response.data.success) {
-//         toast.success('Certificate generated successfully!');
-//         setShowGenerateModal(false);
-//         fetchCertificates();
-//         setSelectedStudent('');
-//         setSelectedCourse('');
-//         setScore(100);
-//       }
-//     } catch (error) {
-//       console.error('Failed to generate certificate:', error);
-//       toast.error(error.response?.data?.error || 'Failed to generate certificate');
-//     } finally {
-//       setGenerating(false);
-//     }
-//   };
-
-//   const handleRevokeCertificate = async (certificateId) => {
-//     if (window.confirm('Are you sure you want to revoke this certificate?')) {
-//       try {
-//         const response = await api.post(`/api/admin/certificates/${certificateId}/revoke`);
-//         if (response.data.success) {
-//           toast.success('Certificate revoked successfully');
-//           fetchCertificates();
-//         }
-//       } catch (error) {
-//         console.error('Failed to revoke certificate:', error);
-//         toast.error('Failed to revoke certificate');
-//       }
-//     }
-//   };
-
-//   const handleDownloadPDF = async (certificateId) => {
-//     try {
-//       window.open(`/api/certificates/download/${certificateId}`, '_blank');
-//     } catch (error) {
-//       console.error('Failed to download certificate:', error);
-//       toast.error('Failed to download certificate');
-//     }
-//   };
-
-//   const handleShare = (certificate) => {
-//     const verificationUrl = `${window.location.origin}/verify-certificate?token=${certificate.verification_token}`;
-//     navigator.clipboard.writeText(verificationUrl);
-//     toast.success('Verification link copied to clipboard!');
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center">
-//         <FaSpinner className="animate-spin text-4xl text-primary-600" />
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="min-h-screen bg-gray-50 py-16">
-//       <div className="container mx-auto px-4">
-//         <div className="max-w-6xl mx-auto">
-//           {/* Header */}
-//           <div className="flex justify-between items-center mb-8">
-//             <div>
-//               <h1 className="text-3xl font-bold text-gray-800">Certificate Management</h1>
-//               <p className="text-gray-600 mt-1">Manage and issue certificates to students</p>
-//             </div>
-//             <button
-//               onClick={() => setShowGenerateModal(true)}
-//               className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg transition"
-//             >
-//               + Generate New Certificate
-//             </button>
-//           </div>
-
-//           {/* Stats Cards */}
-//           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-//             <div className="bg-white rounded-xl shadow-md p-6">
-//               <div className="flex items-center justify-between">
-//                 <div>
-//                   <p className="text-gray-500 text-sm">Total Certificates</p>
-//                   <p className="text-3xl font-bold text-gray-800">{certificates.length}</p>
-//                 </div>
-//                 <FaCheckCircle className="text-3xl text-green-500" />
-//               </div>
-//             </div>
-//             <div className="bg-white rounded-xl shadow-md p-6">
-//               <div className="flex items-center justify-between">
-//                 <div>
-//                   <p className="text-gray-500 text-sm">Active Certificates</p>
-//                   <p className="text-3xl font-bold text-gray-800">
-//                     {certificates.filter(c => c.status === 'active').length}
-//                   </p>
-//                 </div>
-//                 <FaCheckCircle className="text-3xl text-primary-600" />
-//               </div>
-//             </div>
-//             <div className="bg-white rounded-xl shadow-md p-6">
-//               <div className="flex items-center justify-between">
-//                 <div>
-//                   <p className="text-gray-500 text-sm">Revoked Certificates</p>
-//                   <p className="text-3xl font-bold text-gray-800">
-//                     {certificates.filter(c => c.status === 'revoked').length}
-//                   </p>
-//                 </div>
-//                 <FaTimesCircle className="text-3xl text-red-500" />
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* Certificates Table */}
-//           <div className="bg-white rounded-xl shadow-md overflow-hidden">
-//             <div className="overflow-x-auto">
-//               <table className="w-full">
-//                 <thead className="bg-gray-50">
-//                   <tr>
-//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Certificate ID</th>
-//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
-//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
-//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Issue Date</th>
-//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
-//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-//                   </tr>
-//                 </thead>
-//                 <tbody className="divide-y divide-gray-200">
-//                   {certificates.map((cert) => (
-//                     <tr key={cert.id} className="hover:bg-gray-50">
-//                       <td className="px-6 py-4 text-sm font-mono">{cert.certificate_id}</td>
-//                       <td className="px-6 py-4">
-//                         <div>
-//                           <p className="font-medium text-gray-900">{cert.student_name}</p>
-//                           <p className="text-xs text-gray-500">{cert.student_email}</p>
-//                         </div>
-//                       </td>
-//                       <td className="px-6 py-4 text-sm">{cert.course_name}</td>
-//                       <td className="px-6 py-4 text-sm">{new Date(cert.issue_date).toLocaleDateString()}</td>
-//                       <td className="px-6 py-4 text-sm font-semibold">{cert.score}%</td>
-//                       <td className="px-6 py-4">
-//                         <span className={`px-2 py-1 rounded-full text-xs ${
-//                           cert.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-//                         }`}>
-//                           {cert.status}
-//                         </span>
-//                       </td>
-//                       <td className="px-6 py-4">
-//                         <div className="flex gap-2">
-//                           <button
-//                             onClick={() => handleDownloadPDF(cert.certificate_id)}
-//                             className="text-blue-600 hover:text-blue-800"
-//                             title="Download PDF"
-//                           >
-//                             <FaDownload size={18} />
-//                           </button>
-//                           <button
-//                             onClick={() => handleShare(cert)}
-//                             className="text-green-600 hover:text-green-800"
-//                             title="Share Verification Link"
-//                           >
-//                             <FaShare size={18} />
-//                           </button>
-//                           {cert.status === 'active' && (
-//                             <button
-//                               onClick={() => handleRevokeCertificate(cert.id)}
-//                               className="text-red-600 hover:text-red-800"
-//                               title="Revoke Certificate"
-//                             >
-//                               <FaTimesCircle size={18} />
-//                             </button>
-//                           )}
-//                         </div>
-//                       </td>
-//                     </tr>
-//                   ))}
-//                 </tbody>
-//               </table>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Generate Certificate Modal */}
-//       {showGenerateModal && (
-//         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-//           <div className="bg-white rounded-2xl max-w-md w-full">
-//             <div className="p-6">
-//               <div className="flex justify-between items-center mb-4">
-//                 <h3 className="text-xl font-bold">Generate Certificate</h3>
-//                 <button onClick={() => setShowGenerateModal(false)} className="text-gray-500 hover:text-gray-700">
-//                   ×
-//                 </button>
-//               </div>
-
-//               <div className="space-y-4">
-//                 <div>
-//                   <label className="block text-gray-700 font-medium mb-1">Select Student *</label>
-//                   <select
-//                     value={selectedStudent}
-//                     onChange={(e) => setSelectedStudent(e.target.value)}
-//                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-//                   >
-//                     <option value="">Select Student</option>
-//                     {students.map((student) => (
-//                       <option key={student.id} value={student.id}>
-//                         {student.name} - {student.email}
-//                       </option>
-//                     ))}
-//                   </select>
-//                 </div>
-
-//                 <div>
-//                   <label className="block text-gray-700 font-medium mb-1">Select Course *</label>
-//                   <select
-//                     value={selectedCourse}
-//                     onChange={(e) => setSelectedCourse(e.target.value)}
-//                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-//                   >
-//                     <option value="">Select Course</option>
-//                     {courses.map((course) => (
-//                       <option key={course.id} value={course.id}>
-//                         {course.name}
-//                       </option>
-//                     ))}
-//                   </select>
-//                 </div>
-
-//                 <div>
-//                   <label className="block text-gray-700 font-medium mb-1">Score (%)</label>
-//                   <input
-//                     type="number"
-//                     min="0"
-//                     max="100"
-//                     value={score}
-//                     onChange={(e) => setScore(parseInt(e.target.value))}
-//                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-//                   />
-//                 </div>
-
-//                 <div className="flex gap-3 pt-4">
-//                   <button
-//                     onClick={handleGenerateCertificate}
-//                     disabled={generating}
-//                     className="flex-1 bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50"
-//                   >
-//                     {generating ? <FaSpinner className="animate-spin inline" /> : 'Generate Certificate'}
-//                   </button>
-//                   <button
-//                     onClick={() => setShowGenerateModal(false)}
-//                     className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400"
-//                   >
-//                     Cancel
-//                   </button>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default CertificateManagement;
-
-
 import React, { useState, useEffect } from 'react';
 import { FaSpinner, FaDownload, FaEye, FaRedo, FaCheckCircle, FaTimesCircle, FaQrcode, FaShare, FaTrashAlt, FaPlus } from 'react-icons/fa';
 import api from '../services/api';
@@ -362,12 +27,13 @@ const CertificateManagement = () => {
     fetchCourses();
   }, []);
 
+  // ✅ FIXED: Added /api/ prefix
   const fetchCertificates = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await api.get('/admin/certificates', config);
+      const response = await api.get('/api/admin/certificates', config);
       if (response.data.success) {
         setCertificates(response.data.certificates);
         setSelectedCertificates([]);
@@ -381,11 +47,12 @@ const CertificateManagement = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const fetchStudents = async () => {
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await api.get('/admin/students', config);
+      const response = await api.get('/api/admin/students', config);
       if (response.data.success) {
         setStudents(response.data.students);
       }
@@ -394,11 +61,12 @@ const CertificateManagement = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const fetchCourses = async () => {
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await api.get('/admin/courses', config);
+      const response = await api.get('/api/admin/courses', config);
       if (response.data.success) {
         setCourses(response.data.courses);
       }
@@ -407,6 +75,7 @@ const CertificateManagement = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleGenerateCertificate = async () => {
     if (!selectedStudent || !selectedCourse) {
       toast.error('Please select student and course');
@@ -417,7 +86,7 @@ const CertificateManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await api.post('/certificates/generate', {
+      const response = await api.post('/api/certificates/generate', {
         student_id: parseInt(selectedStudent),
         course_id: parseInt(selectedCourse),
         score: score
@@ -439,6 +108,7 @@ const CertificateManagement = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleDeleteCertificate = async () => {
     if (!selectedCertificate) return;
     
@@ -446,7 +116,7 @@ const CertificateManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await api.delete(`/admin/certificates/${selectedCertificate.id}`, config);
+      const response = await api.delete(`/api/admin/certificates/${selectedCertificate.id}`, config);
       
       if (response.data.success) {
         toast.success('Certificate permanently deleted from database!');
@@ -464,11 +134,12 @@ const CertificateManagement = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleDownloadPDF = async (certificateId) => {
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await api.get(`/certificates/download/${certificateId}`, config);
+      const response = await api.get(`/api/certificates/download/${certificateId}`, config);
       if (response.data.pdf_url) {
         window.open(response.data.pdf_url, '_blank');
       } else {
@@ -511,6 +182,7 @@ const CertificateManagement = () => {
     setSelectAll(!selectAll);
   };
 
+  // ✅ FIXED: Added /api/ prefix for bulk delete
   const handleBulkDelete = async () => {
     if (selectedCertificates.length === 0) {
       toast.error('No certificates selected for deletion');
@@ -527,7 +199,7 @@ const CertificateManagement = () => {
         
         for (const certId of selectedCertificates) {
           try {
-            await api.delete(`/admin/certificates/${certId}`, config);
+            await api.delete(`/api/admin/certificates/${certId}`, config);
             successCount++;
           } catch (error) {
             console.error(`Failed to delete certificate ${certId}:`, error);
@@ -547,6 +219,7 @@ const CertificateManagement = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix for delete all
   const handleDeleteAll = async () => {
     if (certificates.length === 0) {
       toast.error('No certificates to delete');
@@ -563,7 +236,7 @@ const CertificateManagement = () => {
         
         for (const cert of certificates) {
           try {
-            await api.delete(`/admin/certificates/${cert.id}`, config);
+            await api.delete(`/api/admin/certificates/${cert.id}`, config);
             successCount++;
           } catch (error) {
             console.error(`Failed to delete certificate ${cert.id}:`, error);
@@ -602,10 +275,10 @@ const CertificateManagement = () => {
   // Filter certificates
   const filteredCertificates = certificates.filter(cert => {
     const matchesSearch = 
-      cert.certificate_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cert.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cert.student_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cert.course_name.toLowerCase().includes(searchTerm.toLowerCase());
+      cert.certificate_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cert.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cert.student_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cert.course_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || cert.status === statusFilter;
     
@@ -801,7 +474,8 @@ const CertificateManagement = () => {
                             <FaTrashAlt size={18} />
                           </button>
                         </div>
-                       </td>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
