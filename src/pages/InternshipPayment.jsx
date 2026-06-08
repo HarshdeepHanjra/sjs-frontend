@@ -50,12 +50,13 @@ const InternshipPayment = () => {
     };
   }, [verificationId, paymentStatus]);
 
+  // ✅ FIXED: Added /api/ prefix
   const checkStatus = async () => {
     if (!verificationId) return;
 
     setCheckingStatus(true);
     try {
-      const response = await api.get(`/payment/status/${verificationId}`);
+      const response = await api.get(`/api/payment/status/${verificationId}`);
       if (response.data.success) {
         const newStatus = response.data.status;
         if (newStatus !== paymentStatus) {
@@ -120,6 +121,7 @@ const InternshipPayment = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleCreateOrder = async () => {
     setVerifying(true);
 
@@ -139,7 +141,7 @@ const InternshipPayment = () => {
         amount: internship.fee,
       });
 
-      const response = await api.post("/internship/create-order", {
+      const response = await api.post("/api/internship/create-order", {
         internship_id: internship.id,
         internship_title: internship.title,
         amount: internship.fee,
@@ -158,7 +160,7 @@ const InternshipPayment = () => {
       console.error("Error creating order:", error);
       if (error.code === "ERR_NETWORK") {
         toast.error(
-          "Cannot connect to server. Please make sure backend is running on port 5000",
+          "Cannot connect to server. Please check if backend is running",
         );
       } else if (error.response?.status === 401) {
         toast.error("Session expired. Please login again.");
@@ -171,6 +173,7 @@ const InternshipPayment = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleUploadAndVerify = async () => {
     if (!screenshot) {
       toast.error("Please upload payment screenshot");
@@ -191,7 +194,7 @@ const InternshipPayment = () => {
     try {
       // Upload screenshot
       const uploadResponse = await api.post(
-        "/payment/upload-screenshot",
+        "/api/payment/upload-screenshot",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -202,7 +205,7 @@ const InternshipPayment = () => {
         const screenshotUrl = uploadResponse.data.screenshot_url;
 
         // Submit verification
-        const verifyResponse = await api.post("/payment/submit-verification", {
+        const verifyResponse = await api.post("/api/payment/submit-verification", {
           order_id: orderId,
           transaction_id: `TXN_${Date.now()}`,
           screenshot_url: screenshotUrl,
@@ -240,13 +243,17 @@ const InternshipPayment = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleFreeEnroll = async () => {
     setVerifying(true);
     try {
-      const response = await api.post("/internship/enroll-free", {
+      const token = localStorage.getItem("token");
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
+      const response = await api.post("/api/internship/enroll-free", {
         internship_id: internship.id,
         internship_title: internship.title,
-      });
+      }, config);
 
       if (response.data.success) {
         toast.success("Successfully enrolled in FREE internship!");
@@ -256,7 +263,7 @@ const InternshipPayment = () => {
       }
     } catch (error) {
       console.error("Enrollment error:", error);
-      toast.error("Failed to enroll in internship");
+      toast.error(error.response?.data?.error || "Failed to enroll in internship");
     } finally {
       setVerifying(false);
     }
