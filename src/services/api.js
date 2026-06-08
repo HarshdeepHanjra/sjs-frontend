@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// ✅ Correct base URL (without /api)
 const API_URL = 'https://sjs-backend-new.onrender.com';
 
 console.log('🔗 API URL:', API_URL);
@@ -21,23 +20,15 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log(`📤 ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
-  (error) => {
-    console.error('❌ Request Error:', error);
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => {
-    console.log(`📥 ${response.config.url} - ${response.status}`);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('❌ Response Error:', error.response?.status, error.response?.data);
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -50,7 +41,7 @@ api.interceptors.response.use(
   }
 );
 
-// ✅ Session object - ADD THIS
+// ✅ ADD THIS - Session object
 export const session = {
   getToken: () => localStorage.getItem('token'),
   getUser: () => {
