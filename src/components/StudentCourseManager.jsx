@@ -17,10 +17,13 @@ const StudentCourseManager = ({ student, onClose, onUpdate }) => {
     }
   }, [student]);
 
+  // ✅ FIXED: Added /api/ prefix to all endpoints
   const fetchStudentCourses = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/admin/students/${student.id}/courses`);
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await api.get(`/api/admin/students/${student.id}/courses`, config);
       console.log("Student courses response:", response.data);
       
       if (response.data.success) {
@@ -37,6 +40,7 @@ const StudentCourseManager = ({ student, onClose, onUpdate }) => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleAddCourse = async () => {
     if (!selectedCourseId) {
       toast.error('Please select a course');
@@ -45,9 +49,11 @@ const StudentCourseManager = ({ student, onClose, onUpdate }) => {
 
     setAddingCourse(true);
     try {
-      const response = await api.post(`/admin/students/${student.id}/courses/add`, {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await api.post(`/api/admin/students/${student.id}/courses/add`, {
         course_id: parseInt(selectedCourseId)
-      });
+      }, config);
       
       console.log("Add course response:", response.data);
       
@@ -67,13 +73,16 @@ const StudentCourseManager = ({ student, onClose, onUpdate }) => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleRemoveCourse = async (courseId, courseName) => {
     if (window.confirm(`Are you sure you want to remove "${courseName}" from ${student.name}'s courses?`)) {
       setRemovingCourse(courseId);
       try {
-        const response = await api.post(`/admin/students/${student.id}/courses/remove`, {
+        const token = localStorage.getItem('token');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const response = await api.post(`/api/admin/students/${student.id}/courses/remove`, {
           course_id: courseId
-        });
+        }, config);
         
         console.log("Remove course response:", response.data);
         
