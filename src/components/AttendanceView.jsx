@@ -13,9 +13,12 @@ const AttendanceView = () => {
     fetchMonthlyData();
   }, []);
 
+  // ✅ FIXED: Add /api/ prefix to endpoints
   const fetchAttendance = async () => {
     try {
-      const response = await api.get('/student/attendance/my-attendance');
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await api.get('/api/student/attendance/my-attendance', config);
       if (response.data.success) {
         setAttendanceData(response.data);
       }
@@ -27,11 +30,14 @@ const AttendanceView = () => {
     }
   };
 
+  // ✅ FIXED: Add /api/ prefix to endpoints
   const fetchMonthlyData = async () => {
     try {
-      const response = await api.get('/student/attendance/monthly');
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await api.get('/api/student/attendance/monthly', config);
       if (response.data.success) {
-        setMonthlyData(response.data.monthly_data);
+        setMonthlyData(response.data.monthly_data || []);
       }
     } catch (error) {
       console.error('Failed to fetch monthly data:', error);
