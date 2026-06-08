@@ -47,10 +47,11 @@ const CertificateVerify = () => {
     }
   }, [token]);
 
+  // ✅ FIXED: Added /api/ prefix
   const verifyCertificate = async () => {
     setVerifying(true);
     try {
-      const response = await api.get(`/certificates/verify?token=${token}`);
+      const response = await api.get(`/api/certificates/verify?token=${token}`);
       
       if (response.data.valid) {
         setValid(true);
