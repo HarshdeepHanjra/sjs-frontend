@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -26,6 +25,7 @@ const MyCourses = () => {
     totalSpent: 0,
   });
 
+  // ✅ FIXED: Added /api/ prefix to all endpoints
   const fetchMyCourses = async (silent = false) => {
     if (!silent) {
       setLoading(true);
@@ -45,7 +45,7 @@ const MyCourses = () => {
 
       let enrolledCourses = [];
       
-      // ✅ Try multiple endpoints to get enrolled courses
+      // ✅ Try multiple endpoints to get enrolled courses (all with /api/ prefix)
       const endpoints = [
         "/api/user/enrolled-courses",
         "/api/cart/my-courses", 
@@ -64,12 +64,12 @@ const MyCourses = () => {
               enrolledCourses = response.data.courses;
               break;
             } else if (response.data.user && response.data.user.course_ids) {
-              // Fetch course details from course_ids
+              // Fetch course details from course_ids with /api/ prefix
               const courseIds = response.data.user.course_ids;
               if (courseIds && courseIds.length > 0) {
                 const coursePromises = courseIds.map(async (courseId) => {
                   try {
-                    const courseRes = await api.get(`/courses/${courseId}`, config);
+                    const courseRes = await api.get(`/api/courses/${courseId}`, config);
                     return courseRes.data;
                   } catch (err) {
                     return null;
@@ -173,10 +173,10 @@ const MyCourses = () => {
 
     fetchMyCourses();
 
-    // Auto-refresh every 15 seconds for real-time updates
+    // Auto-refresh every 30 seconds for real-time updates
     const interval = setInterval(() => {
       fetchMyCourses(true);
-    }, 15000);
+    }, 30000);
 
     return () => {
       clearInterval(interval);
