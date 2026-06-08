@@ -20,9 +20,12 @@ const AdminAttendance = () => {
     fetchCourses();
   }, []);
 
+  // ✅ FIXED: Added /api/ prefix
   const fetchCourses = async () => {
     try {
-      const response = await api.get('/courses');
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await api.get('/api/courses', config);
       setCourses(response.data.courses);
     } catch (error) {
       console.error('Failed to fetch courses:', error);
@@ -30,11 +33,14 @@ const AdminAttendance = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const fetchStudentsForCourse = async (courseId) => {
     setLoadingStudents(true);
     try {
       console.log('Fetching students for course:', courseId);
-      const response = await api.get(`/admin/attendance/courses/${courseId}/students`);
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await api.get(`/api/admin/attendance/courses/${courseId}/students`, config);
       console.log('Students response:', response.data);
       
       if (response.data.success) {
@@ -64,9 +70,12 @@ const AdminAttendance = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const fetchExistingAttendance = async (courseId, date) => {
     try {
-      const response = await api.get(`/admin/attendance/course/${courseId}/date/${date}`);
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await api.get(`/api/admin/attendance/course/${courseId}/date/${date}`, config);
       if (response.data.success && response.data.attendances.length > 0) {
         const existingStatus = { ...attendances };
         const existingRemarks = { ...remarks };
@@ -113,6 +122,7 @@ const AdminAttendance = () => {
     toast.success(`All students marked as ${status}`);
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleSubmitAttendance = async () => {
     if (!selectedCourse) {
       toast.error('Please select a course');
@@ -132,11 +142,13 @@ const AdminAttendance = () => {
 
     setSaving(true);
     try {
-      const response = await api.post('/admin/attendance/mark', {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await api.post('/api/admin/attendance/mark', {
         course_id: selectedCourse,
         date: selectedDate,
         attendances: attendanceData
-      });
+      }, config);
       
       if (response.data.success) {
         toast.success(response.data.message);
@@ -152,11 +164,14 @@ const AdminAttendance = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const fetchSummaries = async () => {
     if (!selectedCourse) return;
     
     try {
-      const response = await api.get(`/admin/attendance/summary/${selectedCourse}`);
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const response = await api.get(`/api/admin/attendance/summary/${selectedCourse}`, config);
       if (response.data.success) {
         setSummaries(response.data.summaries);
       }
