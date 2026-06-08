@@ -63,26 +63,34 @@ const Home = () => {
     { number: '5+', label: 'Expert Trainers', icon: FaUserTie },
   ];
 
+  // ✅ FIXED: Use api instance with /api/ prefix instead of axios directly
   const handleDemoBooking = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/demo/book`, demoForm);
+      const token = localStorage.getItem('token');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      await api.post('/api/demo/book', demoForm, config);
       toast.success('Demo class booked successfully! We will contact you soon.');
       setShowDemoModal(false);
       setDemoForm({ name: '', email: '', phone: '', date: '' });
     } catch (error) {
-      toast.error('Failed to book demo. Please try again.');
+      console.error('Demo booking error:', error);
+      toast.error(error.response?.data?.error || 'Failed to book demo. Please try again.');
     }
   };
 
+  // ✅ FIXED: Use api instance with /api/ prefix
   const handleInquiry = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/contact/inquiry`, inquiryForm);
+      const token = localStorage.getItem('token');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      await api.post('/api/contact/inquiry', inquiryForm, config);
       toast.success('Message sent successfully! We will get back to you soon.');
       setInquiryForm({ name: '', email: '', message: '' });
     } catch (error) {
-      toast.error('Failed to send message. Please try again.');
+      console.error('Inquiry error:', error);
+      toast.error(error.response?.data?.error || 'Failed to send message. Please try again.');
     }
   };
 
@@ -147,14 +155,6 @@ const Home = () => {
                     Enroll Now →
                   </motion.button>
                 </Link>
-                {/* <motion.button 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowDemoModal(true)}
-                  className="bg-transparent border-2 border-white hover:bg-white hover:text-primary-600 text-white font-bold px-8 py-4 rounded-lg transition duration-300 w-full sm:w-auto"
-                >
-                  Free Demo Class
-                </motion.button> */}
               </div>
               
               {/* Trust Badges */}
@@ -342,56 +342,6 @@ const Home = () => {
         </div>
       </section>
 
-     
-      {/* <section className="py-20 bg-gradient-to-br from-primary-50 to-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
-              Student <span className="text-primary-600">Success Stories</span>
-            </h2>
-            <p className="text-gray-600 text-lg">Hear from our happy students who transformed their careers</p>
-          </div>
-
-          <Swiper
-            modules={[Autoplay, Pagination, Navigation]}
-            spaceBetween={30}
-            slidesPerView={1}
-            pagination={{ clickable: true }}
-            autoplay={{ delay: 5000 }}
-            breakpoints={{
-              640: { slidesPerView: 1 },
-              768: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-            }}
-            className="pb-12"
-          >
-            {testimonials.map((testimonial) => (
-              <SwiperSlide key={testimonial.id}>
-                <div className="bg-white rounded-2xl shadow-xl p-6 m-4">
-                  <div className="flex items-center mb-4">
-                    <img src={testimonial.image} alt={testimonial.name} className="w-16 h-16 rounded-full mr-4 object-cover" />
-                    <div>
-                      <h3 className="font-bold text-lg text-gray-800">{testimonial.name}</h3>
-                      <p className="text-gray-600 text-sm">{testimonial.course}</p>
-                      <div className="text-yellow-400 text-sm">
-                        {'★'.repeat(testimonial.rating)}{'☆'.repeat(5 - testimonial.rating)}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 italic mb-4">"{testimonial.text}"</p>
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-green-600 font-semibold">🏢 {testimonial.company}</span>
-                      <span className="text-orange-600 font-semibold">💰 {testimonial.salary}</span>
-                    </div>
-                  </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </div>
-      </section> */}
-
       {/* Trainer/Founder Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -410,10 +360,6 @@ const Home = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary-900/30 to-transparent"></div>
               </div>
-              {/* <div className="absolute -bottom-6 -right-6 bg-orange-500 text-white p-4 rounded-xl shadow-lg">
-                <p className="font-bold">+ Years</p>
-                <p className="text-sm">Experience</p>
-              </div> */}
             </motion.div>
             
             <motion.div
@@ -467,7 +413,7 @@ const Home = () => {
                   </div>
                   <div>
                     <p className="text-gray-400">WhatsApp</p>
-                    <a href="https://wa.me/9185950026639" className="text-xl font-semibold hover:text-orange-400 transition">
+                    <a href="https://wa.me/918950026639" className="text-xl font-semibold hover:text-orange-400 transition">
                       +91 89500 26639
                     </a>
                   </div>
@@ -491,7 +437,7 @@ const Home = () => {
                   </div>
                   <div>
                     <p className="text-gray-400">Phone</p>
-                    <a href="tel:+9185950026639" className="text-xl font-semibold hover:text-orange-400 transition">
+                    <a href="tel:+918950026639" className="text-xl font-semibold hover:text-orange-400 transition">
                       +91 89500 26639
                     </a>
                   </div>
@@ -502,7 +448,7 @@ const Home = () => {
         </div>
       </section>
 
-      Demo Modal
+      {/* Demo Modal */}
       {showDemoModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <motion.div
@@ -518,7 +464,7 @@ const Home = () => {
                 value={demoForm.name}
                 onChange={(e) => setDemoForm({...demoForm, name: e.target.value})}
                 required
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               <input
                 type="email"
@@ -526,7 +472,7 @@ const Home = () => {
                 value={demoForm.email}
                 onChange={(e) => setDemoForm({...demoForm, email: e.target.value})}
                 required
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               <input
                 type="tel"
@@ -534,19 +480,19 @@ const Home = () => {
                 value={demoForm.phone}
                 onChange={(e) => setDemoForm({...demoForm, phone: e.target.value})}
                 required
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               <input
                 type="date"
                 value={demoForm.date}
                 onChange={(e) => setDemoForm({...demoForm, date: e.target.value})}
                 required
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
-              <button type="submit" className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600">
+              <button type="submit" className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition">
                 Book Free Demo
               </button>
-              <button type="button" onClick={() => setShowDemoModal(false)} className="w-full text-gray-500 py-2">
+              <button type="button" onClick={() => setShowDemoModal(false)} className="w-full text-gray-500 py-2 hover:text-gray-700 transition">
                 Cancel
               </button>
             </form>
@@ -558,6 +504,3 @@ const Home = () => {
 };
 
 export default Home;
-
-
-
