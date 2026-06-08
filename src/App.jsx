@@ -15,7 +15,7 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
-import CertificateVerify from "./pages/CertificateVerify";  // Keep only one import
+import CertificateVerify from "./pages/CertificateVerify";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import Login from "./pages/Login";
@@ -37,11 +37,9 @@ import MyInternships from './pages/MyInternships';
 import StudentCourseManager from "./components/StudentCourseManager";
 import ProtectedRoute from './components/ProtectedRoute';
 
-
 // New Certificate Management Pages
 import CertificateManagement from './pages/CertificateManagement';
 import MyCertificates from './pages/MyCertificates';
-// CertificateVerify is already imported above - DO NOT IMPORT AGAIN
 
 const queryClient = new QueryClient();
 
@@ -62,7 +60,6 @@ function AppContent() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify-certificate" element={<CertificateVerify />} />
           
           {/* Protected Routes - Student */}
           <Route 
@@ -223,4 +220,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
