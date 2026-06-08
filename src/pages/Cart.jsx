@@ -27,9 +27,7 @@ const Cart = () => {
   useEffect(() => {
     const handlePaymentApproved = (event) => {
       console.log("Payment approved, clearing cart...", event.detail);
-      // Clear the cart
       clearCart();
-      // Also clear localStorage
       localStorage.removeItem('sjs_cart');
       localStorage.removeItem('pendingOrder');
       toast.success('Thank you for your purchase! Your cart has been cleared.');
@@ -56,12 +54,11 @@ const Cart = () => {
         return;
       }
       
-      // Set the token in axios defaults for all requests
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
-      // Verify token with backend
       try {
-        const response = await api.get('/auth/verify-token');
+        // ✅ FIXED: Added /api/ prefix
+        const response = await api.get('/api/auth/verify-token');
         console.log("Token verification response:", response.data);
         
         if (response.data.valid) {
@@ -98,16 +95,15 @@ const Cart = () => {
       
       setUpdatingPrices(true);
       try {
-        // Fetch latest course prices from database
+        // ✅ FIXED: Added /api/ prefix
         console.log("Fetching latest prices for cart items...");
-        const response = await api.get('/courses/latest-prices');
+        const response = await api.get('/api/courses/latest-prices');
         console.log("Latest prices response:", response.data);
         
         if (response.data && response.data.success && response.data.courses) {
           const latestCourses = response.data.courses;
           console.log("Latest courses data:", latestCourses);
           
-          // Update cart with latest prices
           const updatedCart = cartItems.map(cartItem => {
             const latestCourse = latestCourses.find(c => c.id === cartItem.id);
             if (latestCourse) {
@@ -121,11 +117,9 @@ const Cart = () => {
             return cartItem;
           });
           
-          // Update cart items in context
           setCartItems(updatedCart);
           console.log("Cart updated with latest prices:", updatedCart);
         } else if (response.data && response.data.courses) {
-          // Fallback if success flag not present
           const latestCourses = response.data.courses;
           const updatedCart = cartItems.map(cartItem => {
             const latestCourse = latestCourses.find(c => c.id === cartItem.id);
@@ -179,11 +173,11 @@ const Cart = () => {
       
       console.log("Creating order with data:", orderData);
       
-      const response = await api.post('/cart/create-order', orderData);
+      // ✅ FIXED: Added /api/ prefix
+      const response = await api.post('/api/cart/create-order', orderData);
       console.log("Order creation response:", response.data);
       
       if (response.data.success) {
-        // Don't clear cart here - wait for payment approval
         const orderInfo = {
           orderId: response.data.order_id,
           totalAmount: response.data.total_amount,
@@ -211,7 +205,6 @@ const Cart = () => {
     }
   };
 
-  // Show loading while checking auth
   if (authChecking) {
     return (
       <div className="min-h-screen bg-gray-50 py-32">
