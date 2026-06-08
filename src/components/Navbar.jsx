@@ -57,6 +57,7 @@ const Navbar = () => {
     setIsProfileOpen(false);
   };
 
+  // ✅ FIXED: Add /api/ prefix to the verification endpoint
   const handleVerifyCertificate = async () => {
     if (!verificationToken.trim()) {
       toast.error('Please enter a verification token or link');
@@ -74,7 +75,7 @@ const Navbar = () => {
     setVerifiedCertificate(null);
 
     try {
-      const response = await api.get(`/certificates/verify?token=${token}`);
+      const response = await api.get(`/api/certificates/verify?token=${token}`);
       
       if (response.data.valid) {
         setVerifiedCertificate(response.data.certificate);
@@ -223,8 +224,6 @@ const Navbar = () => {
     { path: '/contact', name: 'Contact', icon: <FaEnvelope className="mr-2" /> },
   ];
 
-  // Only show dashboard links in dropdown, not in navbar
-  // Navbar only shows public links
   const navLinks = publicNavLinks;
 
   return (
@@ -473,7 +472,7 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Verify Certificate Modal - Keep as is */}
+      {/* Verify Certificate Modal */}
       {showVerifyModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -497,7 +496,7 @@ const Navbar = () => {
                   }}
                   className="text-gray-400 hover:text-gray-600 transition"
                 >
-                  <FaTimes size={24} />
+                  <FaTimesIcon size={24} />
                 </button>
               </div>
 
@@ -557,7 +556,7 @@ const Navbar = () => {
                       onClick={handlePrintCertificate}
                       className="flex-1 bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700 flex items-center justify-center gap-2 transition text-sm"
                     >
-                      <FaSpinner /> Print
+                      <FaPrint /> Print
                     </button>
                     <button
                       onClick={() => {
