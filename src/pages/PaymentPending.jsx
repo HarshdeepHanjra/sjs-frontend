@@ -43,12 +43,14 @@ const PaymentPending = () => {
           </p>
           
           <div className="space-y-3">
-            <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">
+            {/* ✅ Fixed WhatsApp number */}
+            <a href="https://wa.me/918950026639" target="_blank" rel="noopener noreferrer">
               <button className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition">
                 <FaWhatsapp /> Contact Support on WhatsApp
               </button>
             </a>
-            <a href="mailto:support@sjsacademy.com">
+            {/* ✅ Fixed email address */}
+            <a href="mailto:sjsglobaltech@gmail.com">
               <button className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg transition">
                 <FaEnvelope /> Email Support
               </button>
