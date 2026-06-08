@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// ✅ Correct base URL (without /api at the end)
+// ✅ Correct base URL (without /api)
 const API_URL = 'https://sjs-backend-new.onrender.com';
 
 console.log('🔗 API URL:', API_URL);
@@ -49,5 +49,26 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// ✅ Session object - ADD THIS
+export const session = {
+  getToken: () => localStorage.getItem('token'),
+  getUser: () => {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+  },
+  getUserType: () => localStorage.getItem('userType'),
+  setUser: (user) => localStorage.setItem('user', JSON.stringify(user)),
+  setUserType: (userType) => localStorage.setItem('userType', userType),
+  clear: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userType');
+  },
+  isAuthenticated: () => {
+    const token = localStorage.getItem('token');
+    return !!token;
+  }
+};
 
 export default api;
