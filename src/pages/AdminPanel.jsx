@@ -2134,7 +2134,7 @@ const AdminPanel = () => {
     setLoadingCertificates(true);
     try {
       const config = getAuthConfig();
-      const response = await api.get("/admin/certificates", config);
+      const response = await api.get("/api/admin/certificates", config);
       if (response.data.success) {
         setCertificates(response.data.certificates);
       }
@@ -2156,7 +2156,7 @@ const AdminPanel = () => {
     try {
       const config = getAuthConfig();
       const response = await api.post(
-        "/certificates/generate",
+        "/api/certificates/generate",
         {
           student_id: parseInt(selectedStudentId),
           course_id: parseInt(selectedCourseId),
@@ -2188,7 +2188,7 @@ const AdminPanel = () => {
       const token = localStorage.getItem("token");
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const response = await api.get(
-        `/certificates/download/${certificate.certificate_id}`,
+        `/api/certificates/download/${certificate.certificate_id}`,
         config,
       );
 
@@ -2238,7 +2238,7 @@ const AdminPanel = () => {
     try {
       const config = getAuthConfig();
       const response = await api.delete(
-        `/admin/certificates/${certificateToDelete.id}`,
+        `/api/admin/certificates/${certificateToDelete.id}`,
         config,
       );
 
@@ -2274,7 +2274,7 @@ const AdminPanel = () => {
     setLoadingCourses(true);
     try {
       const config = getAuthConfig();
-      const response = await api.get("/admin/courses", config);
+      const response = await api.get("/api/admin/courses", config);
       if (response.data.success) {
         setCourses(response.data.courses);
         window.dispatchEvent(
@@ -2331,7 +2331,7 @@ const AdminPanel = () => {
       try {
         const config = getAuthConfig();
         const response = await api.delete(
-          `/admin/courses/${course.id}`,
+          `/api/admin/courses/${course.id}`,
           config,
         );
         if (response.data.success) {
@@ -2350,7 +2350,7 @@ const AdminPanel = () => {
     try {
       const config = getAuthConfig();
       const response = await api.put(
-        `/admin/courses/${course.id}`,
+        `/api/admin/courses/${course.id}`,
         {
           ...course,
           is_active: !course.is_active,
@@ -2404,12 +2404,12 @@ const AdminPanel = () => {
       let response;
       if (editingCourse) {
         response = await api.put(
-          `/admin/courses/${editingCourse.id}`,
+          `/api/admin/courses/${editingCourse.id}`,
           courseData,
           config,
         );
       } else {
-        response = await api.post("/admin/courses", courseData, config);
+        response = await api.post("/api/admin/courses", courseData, config);
       }
 
       if (response.data.success) {
@@ -2452,7 +2452,7 @@ const AdminPanel = () => {
   //   setLoadingRequests(true);
   //   try {
   //     const config = getAuthConfig();
-  //     const response = await api.get("/admin/payment-requests", config);
+  //     const response = await api.get("/api/admin/payment-requests", config);
   //     if (response.data.success) {
   //       setPaymentRequests(response.data.verifications || []);
   //     }
@@ -2466,7 +2466,7 @@ const AdminPanel = () => {
   // const fetchPaymentStats = async () => {
   //   try {
   //     const config = getAuthConfig();
-  //     const response = await api.get("/admin/payment-stats", config);
+  //     const response = await api.get("/api/admin/payment-stats", config);  
   //     if (response.data.success) {
   //       setPaymentStats(response.data.stats);
   //     } else {
@@ -2575,7 +2575,7 @@ const fetchPaymentRequests = async () => {
   setLoadingRequests(true);
   try {
     const config = getAuthConfig();
-    const response = await api.get("/admin/payment-requests", config);
+    const response = await api.get(" /api/admin/payment-requests", config);
     if (response.data.success) {
       setPaymentRequests(response.data.verifications || []);
     }
@@ -2589,7 +2589,7 @@ const fetchPaymentRequests = async () => {
 const fetchPaymentStats = async () => {
   try {
     const config = getAuthConfig();
-    const response = await api.get("/admin/payment-stats", config);
+    const response = await api.get("/api/admin/payment-stats", config);
     if (response.data.success) {
       setPaymentStats(response.data.stats);
     } else {
@@ -2606,7 +2606,7 @@ const handleApprove = async (request) => {
   try {
     const config = getAuthConfig();
     const response = await api.post(
-      `/admin/payment-requests/${request.id}/approve`,
+      `/api/admin/payment-requests/${request.id}/approve`,
       {
         notes: adminNotes || "Payment verified and approved successfully.",
       },
@@ -2652,7 +2652,7 @@ const handleDecline = async (request) => {
   setProcessingId(request.id);
   try {
     const config = getAuthConfig();
-    const response = await api.post(`/admin/payment-requests/${request.id}/decline`, {
+    const response = await api.post(`/api/admin/payment-requests/${request.id}/decline`, {
       notes: adminNotes || "Payment verification failed.",
     }, config);
 
@@ -2700,7 +2700,7 @@ const fetchInternshipPayments = async () => {
   setLoadingInternshipPayments(true);
   try {
     const config = getAuthConfig();
-    const response = await api.get("/admin/internship-payment-requests", config);
+    const response = await api.get("/api/admin/internship-payment-requests", config);
     if (response.data.success) {
       setInternshipPayments(response.data.payments || []);
     }
@@ -2716,7 +2716,7 @@ const handleInternshipApprove = async (payment) => {
   setProcessingId(payment.id);
   try {
     const config = getAuthConfig();
-    const response = await api.post(`/admin/internship-payment-requests/${payment.id}/approve`, {
+    const response = await api.post(`/api/admin/internship-payment-requests/${payment.id}/approve`, {
       notes: adminNotes || "Internship payment verified and approved.",
     }, config);
 
@@ -2746,7 +2746,7 @@ const handleInternshipDecline = async (payment) => {
   setProcessingId(payment.id);
   try {
     const config = getAuthConfig();
-    const response = await api.post(`/admin/internship-payment-requests/${payment.id}/decline`, {
+    const response = await api.post(`/api/admin/internship-payment-requests/${payment.id}/decline`, { 
       notes: adminNotes || "Internship payment verification failed.",
     }, config);
 
@@ -2770,7 +2770,7 @@ const handleInternshipDecline = async (payment) => {
     setLoadingStudents(true);
     try {
       const config = getAuthConfig();
-      const response = await api.get("/admin/students", config);
+      const response = await api.get("/api/admin/students", config);
       if (response.data.success) {
         setStudents(response.data.students);
       }
