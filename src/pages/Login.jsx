@@ -31,7 +31,7 @@ const Login = () => {
 
   const handleStudentLogin = async () => {
   try {
-    const response = await api.post('/auth/student/login', {
+    const response = await api.post('/api/auth/student/login', {
       email: formData.email,
       password: formData.password
     });
@@ -83,7 +83,7 @@ const Login = () => {
 
   const handleAdminLogin = async () => {
   try {
-    const response = await api.post('/auth/admin/login', {
+    const response = await api.post('/api/auth/admin/login', {
       email: formData.email,
       password: formData.password
     });

@@ -12,7 +12,7 @@ import {
 } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/UserContext';
-import api, { session } from '../services/api';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 
 const Navbar = () => {

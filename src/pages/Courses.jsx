@@ -46,7 +46,7 @@ const Courses = () => {
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/courses');
+      const response = await api.get('/api/courses');
       if (response.data && response.data.courses) {
         setCourses(response.data.courses);
         setFilteredCourses(response.data.courses);

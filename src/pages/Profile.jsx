@@ -90,7 +90,7 @@ const Profile = () => {
     console.log("Sending update data:", updateData);
     
     try {
-      const response = await api.put('/user/update-profile', updateData);
+      const response = await api.put('/api/user/update-profile', updateData);
       
       console.log("Update response:", response.data);
       
@@ -130,7 +130,7 @@ const Profile = () => {
     
     setLoading(true);
     try {
-      const response = await api.post('/auth/change-password', {
+      const response = await api.post('/api/auth/change-password', {
         current_password: passwordData.current_password,
         new_password: passwordData.new_password
       });
@@ -158,7 +158,7 @@ const Profile = () => {
     setNotifications({ ...notifications, [key]: newValue });
     
     try {
-      const response = await api.put('/user/notification-preferences', {
+      const response = await api.put('/api/user/notification-preferences', {
         preferences: { ...notifications, [key]: newValue }
       });
       if (response.data.success) {
@@ -174,7 +174,7 @@ const Profile = () => {
   const saveNotificationPreferences = async () => {
     setSavingPreferences(true);
     try {
-      const response = await api.put('/user/notification-preferences', {
+      const response = await api.put('/api/user/notification-preferences', {  
         preferences: notifications
       });
       if (response.data.success) {
