@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -19,11 +19,15 @@ import {
   FaTrophy,
   FaUserGraduate,
   FaArrowRight,
+  FaSpinner,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 const Internship = () => {
+  const [internships, setInternships] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedInternship, setSelectedInternship] = useState(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [applicationForm, setApplicationForm] = useState({
@@ -34,10 +38,32 @@ const Internship = () => {
     internshipType: "",
     message: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const internships = [
+  // ✅ Fetch internships from backend
+  const fetchInternships = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/api/internships');
+      if (response.data.success) {
+        setInternships(response.data.internships);
+      } else {
+        // Fallback data if API fails
+        setInternships(getFallbackInternships());
+      }
+    } catch (error) {
+      console.error('Failed to fetch internships:', error);
+      toast.error('Failed to load internships');
+      // Use fallback data
+      setInternships(getFallbackInternships());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fallback internships data
+  const getFallbackInternships = () => [
     {
       id: 1,
       title: "Data Science Internship",
@@ -45,35 +71,17 @@ const Internship = () => {
       duration: "3 Months",
       fee: 6000,
       originalFee: 19999,
-      //   type: '6000',
       stipend: "Unpaid",
       mode: "Online",
       startDate: "Monthly Batch",
       slots: 50,
       enrolled: 234,
       rating: 4.9,
-      description:
-        "Learn Data Science from scratch with real-world projects. Get hands-on experience in Python, SQL, and Machine Learning.",
-      syllabus: [
-        "Python Programming Fundamentals",
-        "Data Analysis with Pandas",
-        "Data Visualization",
-        "SQL for Data Science",
-        "Machine Learning Basics",
-        "Capstone Project",
-      ],
-      benefits: [
-        "With Certification",
-        "Live Projects",
-        "Industry Mentors",
-        "Placement Assistance",
-        "Internship Certificate",
-      ],
-      requirements: [
-        "Basic computer knowledge",
-        "Graduate/Undergraduate students",
-        "Commitment of 2 hours daily",
-      ],
+      description: "Learn Data Science from scratch with real-world projects. Get hands-on experience in Python, SQL, and Machine Learning.",
+      syllabus: ["Python Programming Fundamentals", "Data Analysis with Pandas", "Data Visualization", "SQL for Data Science", "Machine Learning Basics", "Capstone Project"],
+      benefits: ["With Certification", "Live Projects", "Industry Mentors", "Placement Assistance", "Internship Certificate"],
+      requirements: ["Basic computer knowledge", "Graduate/Undergraduate students", "Commitment of 2 hours daily"],
+      is_active: true
     },
     {
       id: 2,
@@ -82,35 +90,17 @@ const Internship = () => {
       duration: "2 Months",
       fee: 0,
       originalFee: 14999,
-      type: "free",
       stipend: "Unpaid",
       mode: "Online",
       startDate: "Monthly Batch",
       slots: 40,
       enrolled: 156,
       rating: 4.8,
-      description:
-        "Master MERN stack development. Build real websites and web applications with industry experts.",
-      syllabus: [
-        "HTML/CSS Fundamentals",
-        "JavaScript Essentials",
-        "React JS",
-        "Node JS & Express",
-        "MongoDB Database",
-        "Full Stack Projects",
-      ],
-      benefits: [
-        "Live Coding Sessions",
-        "Portfolio Development",
-        "Certificate of Completion",
-        "Interview Preparation",
-        "GitHub Projects",
-      ],
-      requirements: [
-        "Basic programming knowledge",
-        "Laptop with 8GB RAM",
-        "Self-learning attitude",
-      ],
+      description: "Master MERN stack development. Build real websites and web applications with industry experts.",
+      syllabus: ["HTML/CSS Fundamentals", "JavaScript Essentials", "React JS", "Node JS & Express", "MongoDB Database", "Full Stack Projects"],
+      benefits: ["Live Coding Sessions", "Portfolio Development", "Certificate of Completion", "Interview Preparation", "GitHub Projects"],
+      requirements: ["Basic programming knowledge", "Laptop with 8GB RAM", "Self-learning attitude"],
+      is_active: true
     },
     {
       id: 3,
@@ -119,35 +109,17 @@ const Internship = () => {
       duration: "2 Months",
       fee: 0,
       originalFee: 12999,
-      type: "free",
       stipend: "Unpaid",
       mode: "Online",
       startDate: "Monthly Batch",
       slots: 60,
       enrolled: 189,
       rating: 4.7,
-      description:
-        "Learn SEO, Social Media Marketing, Google Ads, and Analytics. Get practical experience.",
-      syllabus: [
-        "SEO Fundamentals",
-        "Social Media Marketing",
-        "Google Ads",
-        "Google Analytics",
-        "Email Marketing",
-        "Content Strategy",
-      ],
-      benefits: [
-        "Free Certification",
-        "Live Campaigns",
-        "Industry Tools Access",
-        "Freelancing Tips",
-        "Placement Support",
-      ],
-      requirements: [
-        "Good communication skills",
-        "Interest in digital marketing",
-        "Creative mindset",
-      ],
+      description: "Learn SEO, Social Media Marketing, Google Ads, and Analytics. Get practical experience.",
+      syllabus: ["SEO Fundamentals", "Social Media Marketing", "Google Ads", "Google Analytics", "Email Marketing", "Content Strategy"],
+      benefits: ["Free Certification", "Live Campaigns", "Industry Tools Access", "Freelancing Tips", "Placement Support"],
+      requirements: ["Good communication skills", "Interest in digital marketing", "Creative mindset"],
+      is_active: true
     },
     {
       id: 4,
@@ -156,35 +128,17 @@ const Internship = () => {
       duration: "3 Months",
       fee: 4999,
       originalFee: 29999,
-      type: "paid",
       stipend: "Performance Based",
       mode: "Hybrid",
       startDate: "Next Batch: Jan 15",
       slots: 30,
       enrolled: 78,
       rating: 4.9,
-      description:
-        "Advanced Data Analytics program with Power BI, Tableau, and SQL. Get a stipend based on performance.",
-      syllabus: [
-        "Advanced Excel",
-        "SQL Mastery",
-        "Power BI",
-        "Tableau",
-        "Business Intelligence",
-        "Real-world Dashboards",
-      ],
-      benefits: [
-        "With Certification",
-        "Job Guarantee",
-        "Industry Recognition",
-        "LinkedIn Recommendations",
-        "Premium Tools Access",
-      ],
-      requirements: [
-        "Graduate in any stream",
-        "Analytical mindset",
-        "Knowledge of basic statistics",
-      ],
+      description: "Advanced Data Analytics program with Power BI, Tableau, and SQL. Get a stipend based on performance.",
+      syllabus: ["Advanced Excel", "SQL Mastery", "Power BI", "Tableau", "Business Intelligence", "Real-world Dashboards"],
+      benefits: ["With Certification", "Job Guarantee", "Industry Recognition", "LinkedIn Recommendations", "Premium Tools Access"],
+      requirements: ["Graduate in any stream", "Analytical mindset", "Knowledge of basic statistics"],
+      is_active: true
     },
     {
       id: 5,
@@ -193,35 +147,17 @@ const Internship = () => {
       duration: "4 Months",
       fee: 9999,
       originalFee: 49999,
-      type: "paid",
       stipend: "Yes (Based on performance)",
       mode: "Online",
       startDate: "Next Batch: Feb 1",
       slots: 25,
       enrolled: 45,
       rating: 5.0,
-      description:
-        "Advanced AI/ML program with deep learning, NLP, and computer vision. Top performers get stipend.",
-      syllabus: [
-        "Python Advanced",
-        "Machine Learning Algorithms",
-        "Deep Learning",
-        "NLP",
-        "Computer Vision",
-        "Research Projects",
-      ],
-      benefits: [
-        "With Certification",
-        "Research Projects",
-        "Publication Support",
-        "Industry Mentorship",
-        "Job Referrals",
-      ],
-      requirements: [
-        "Programming knowledge",
-        "Mathematics background",
-        "Passion for AI/ML",
-      ],
+      description: "Advanced AI/ML program with deep learning, NLP, and computer vision. Top performers get stipend.",
+      syllabus: ["Python Advanced", "Machine Learning Algorithms", "Deep Learning", "NLP", "Computer Vision", "Research Projects"],
+      benefits: ["With Certification", "Research Projects", "Publication Support", "Industry Mentorship", "Job Referrals"],
+      requirements: ["Programming knowledge", "Mathematics background", "Passion for AI/ML"],
+      is_active: true
     },
     {
       id: 6,
@@ -230,37 +166,23 @@ const Internship = () => {
       duration: "2 Months",
       fee: 2999,
       originalFee: 19999,
-      type: "paid",
       stipend: "Certificate Only",
       mode: "Online",
       startDate: "Monthly Batch",
       slots: 35,
       enrolled: 92,
       rating: 4.8,
-      description:
-        "Learn UI/UX design with Figma, Adobe XD, and create professional portfolios.",
-      syllabus: [
-        "Design Principles",
-        "Figma Mastery",
-        "Adobe XD",
-        "User Research",
-        "Prototyping",
-        "Portfolio Creation",
-      ],
-      benefits: [
-        "Python Certificate",
-        "Portfolio Review",
-        "Mock Interviews",
-        "Freelance Projects",
-        "Community Access",
-      ],
-      requirements: [
-        "Creative mindset",
-        "Basic computer skills",
-        "Eye for design",
-      ],
+      description: "Master Python development with real-world projects and become a professional developer.",
+      syllabus: ["Python Basics", "OOP Concepts", "Web Scraping", "API Development", "Django Framework", "Real Projects"],
+      benefits: ["Python Certificate", "Portfolio Review", "Mock Interviews", "Freelance Projects", "Community Access"],
+      requirements: ["Basic programming knowledge", "Dedication to learn", "Computer with internet"],
+      is_active: true
     },
   ];
+
+  useEffect(() => {
+    fetchInternships();
+  }, []);
 
   const stats = [
     { number: "500+", label: "Interns Completed", icon: FaUsers },
@@ -270,6 +192,14 @@ const Internship = () => {
   ];
 
   const handleApply = (internship) => {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Please login to apply for internship');
+      navigate('/login', { state: { returnUrl: '/internship' } });
+      return;
+    }
+    
     setSelectedInternship(internship);
     setApplicationForm({
       ...applicationForm,
@@ -278,27 +208,67 @@ const Internship = () => {
     setShowApplyModal(true);
   };
 
+  // ✅ Submit application to backend
   const handleApplicationSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      toast.success(
-        `Application submitted for ${selectedInternship.title}! We'll contact you soon.`,
-      );
-      setShowApplyModal(false);
-      setApplicationForm({
-        name: "",
-        email: "",
-        phone: "",
-        qualification: "",
-        internshipType: "",
-        message: "",
-      });
-      setLoading(false);
-    }, 1500);
+    
+    if (!selectedInternship) return;
+    
+    setSubmitting(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
+      const response = await api.post('/api/internships/apply', {
+        internship_id: selectedInternship.id,
+        name: applicationForm.name,
+        email: applicationForm.email,
+        phone: applicationForm.phone,
+        qualification: applicationForm.qualification,
+        message: applicationForm.message
+      }, config);
+      
+      if (response.data.success) {
+        toast.success(`Application submitted for ${selectedInternship.title}! We'll contact you soon.`);
+        setShowApplyModal(false);
+        setApplicationForm({
+          name: "",
+          email: "",
+          phone: "",
+          qualification: "",
+          internshipType: "",
+          message: "",
+        });
+      } else {
+        toast.error(response.data.message || 'Failed to submit application');
+      }
+    } catch (error) {
+      console.error('Application submission error:', error);
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        navigate('/login');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to submit application');
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  // Filter only active internships
+  const activeInternships = internships.filter(i => i.is_active !== false);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-4xl text-primary-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading internships...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -384,136 +354,140 @@ const Internship = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {internships.map((internship, index) => (
-              <motion.div
-                key={internship.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -10 }}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden group"
-              >
-                {/* Badge */}
-                <div className="relative">
-                  {internship.fee === 0 ? (
-                    <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
-                      🎓 FREE
-                    </div>
-                  ) : (
-                    <div className="absolute top-4 right-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
-                      💰 PAID
-                    </div>
-                  )}
-
-                  {/* Header */}
-                  <div className="bg-gradient-to-r from-primary-500 to-primary-700 p-6 text-white">
-                    <FaLaptopCode className="text-4xl mb-3" />
-                    <h3 className="text-xl font-bold">{internship.title}</h3>
-                    <div className="flex items-center mt-2">
-                      <FaStar className="text-yellow-400 mr-1" />
-                      <span>{internship.rating}</span>
-                      <span className="mx-2">•</span>
-                      <span className="text-sm">{internship.mode}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Body */}
-                <div className="p-6">
-                  <p className="text-gray-600 mb-4 line-clamp-2">
-                    {internship.description}
-                  </p>
-
-                  {/* Details */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <FaClock className="text-gray-400" />
-                        <span>{internship.duration}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FaCalendarAlt className="text-gray-400" />
-                        <span>{internship.startDate}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FaUsers className="text-gray-400" />
-                        <span className="text-sm">
-                          {internship.slots} slots
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FaUserGraduate className="text-gray-400" />
-                        <span className="text-sm">
-                          {internship.enrolled} enrolled
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Price Section */}
-                  <div className="mb-4">
+          {activeInternships.length === 0 ? (
+            <div className="text-center py-12">
+              <FaLaptopCode className="text-6xl text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No internships available at the moment.</p>
+              <p className="text-sm text-gray-400">Please check back later.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {activeInternships.map((internship, index) => (
+                <motion.div
+                  key={internship.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ y: -10 }}
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden group"
+                >
+                  {/* Badge */}
+                  <div className="relative">
                     {internship.fee === 0 ? (
-                      <div className="text-center">
-                        <span className="text-2xl font-bold text-green-600">
-                          FREE
-                        </span>
-                        <span className="text-gray-400 line-through ml-2">
-                          ₹{internship.originalFee}
-                        </span>
+                      <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
+                        🎓 FREE
                       </div>
                     ) : (
-                      <div className="text-center">
-                        <span className="text-2xl font-bold text-primary-600">
-                          ₹{internship.fee}
-                        </span>
-                        <span className="text-gray-400 line-through ml-2">
-                          ₹{internship.originalFee}
-                        </span>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {internship.stipend}
-                        </p>
+                      <div className="absolute top-4 right-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
+                        💰 PAID
                       </div>
                     )}
+
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-primary-500 to-primary-700 p-6 text-white">
+                      <FaLaptopCode className="text-4xl mb-3" />
+                      <h3 className="text-xl font-bold">{internship.title}</h3>
+                      <div className="flex items-center mt-2">
+                        <FaStar className="text-yellow-400 mr-1" />
+                        <span>{internship.rating}</span>
+                        <span className="mx-2">•</span>
+                        <span className="text-sm">{internship.mode}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Benefits Preview */}
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 text-sm text-green-600 mb-1">
-                      <FaCheckCircle />
-                      <span>{internship.benefits[0]}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-green-600">
-                      <FaCheckCircle />
-                      <span>{internship.benefits[1]}</span>
-                    </div>
-                  </div>
+                  {/* Body */}
+                  <div className="p-6">
+                    <p className="text-gray-600 mb-4 line-clamp-2">
+                      {internship.description}
+                    </p>
 
-                  {/* Buttons */}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() =>
-                        navigate(`/internship-payment/${internship.id}`, {
-                          state: { internship },
-                        })
-                      }
-                      className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-lg transition"
-                    >
-                      Apply Now →
-                    </button>
-                    <Link to={`/internship/${internship.id}`}>
-                      <button className="px-4 py-2 border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition">
-                        Details
+                    {/* Details */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <FaClock className="text-gray-400" />
+                          <span>{internship.duration}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FaCalendarAlt className="text-gray-400" />
+                          <span>{internship.startDate}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FaUsers className="text-gray-400" />
+                          <span className="text-sm">
+                            {internship.slots} slots
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FaUserGraduate className="text-gray-400" />
+                          <span className="text-sm">
+                            {internship.enrolled} enrolled
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Price Section */}
+                    <div className="mb-4">
+                      {internship.fee === 0 ? (
+                        <div className="text-center">
+                          <span className="text-2xl font-bold text-green-600">
+                            FREE
+                          </span>
+                          <span className="text-gray-400 line-through ml-2">
+                            ₹{internship.originalFee}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <span className="text-2xl font-bold text-primary-600">
+                            ₹{internship.fee}
+                          </span>
+                          <span className="text-gray-400 line-through ml-2">
+                            ₹{internship.originalFee}
+                          </span>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {internship.stipend}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Benefits Preview */}
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 text-sm text-green-600 mb-1">
+                        <FaCheckCircle />
+                        <span>{internship.benefits?.[0] || 'Certificate Included'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-green-600">
+                        <FaCheckCircle />
+                        <span>{internship.benefits?.[1] || 'Practical Training'}</span>
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleApply(internship)}
+                        className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-lg transition"
+                      >
+                        Apply Now →
                       </button>
-                    </Link>
+                      <Link to={`/internship/${internship.id}`}>
+                        <button className="px-4 py-2 border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition">
+                          Details
+                        </button>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -705,16 +679,17 @@ const Internship = () => {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={submitting}
                 className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
               >
-                {loading ? "Submitting..." : "Submit Application →"}
+                {submitting ? <FaSpinner className="animate-spin inline mr-2" /> : null}
+                {submitting ? "Submitting..." : "Submit Application →"}
               </button>
             </form>
 
             <div className="mt-4 flex gap-3 justify-center">
               <a
-                href="https://wa.me/919876543210"
+                href="https://wa.me/918950026639"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -722,7 +697,7 @@ const Internship = () => {
                   <FaWhatsapp /> WhatsApp
                 </button>
               </a>
-              <a href="mailto:internship@sjsacademy.com">
+              <a href="mailto:sjsglobaltech@gmail.com">
                 <button className="flex items-center gap-2 text-primary-600 hover:text-primary-700">
                   <FaEnvelope /> Email
                 </button>
@@ -746,7 +721,7 @@ const Internship = () => {
               </button>
             </Link>
             <a
-              href="https://wa.me/919876543210"
+              href="https://wa.me/918950026639"
               target="_blank"
               rel="noopener noreferrer"
             >
