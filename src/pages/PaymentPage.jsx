@@ -8,12 +8,13 @@ import {
   FaDownload,
   FaSpinner,
   FaMoneyBillWave,
+  FaEnvelope
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import api from "../services/api";
 
 const YOUR_UPI_ID = "sjsacademy@okhdfcbank";
-const YOUR_PHONE = "919876543210";
+const YOUR_PHONE = "918950026639";  // ✅ Fixed phone number
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -47,6 +48,7 @@ const PaymentPage = () => {
     toast.success("QR Code downloaded!");
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleVerifyPayment = async () => {
     if (!orderId) {
       toast.error("No order found");
@@ -57,7 +59,7 @@ const PaymentPage = () => {
     setVerifying(true);
 
     try {
-      const response = await api.post("/cart/verify-payment", {
+      const response = await api.post("/api/cart/verify-payment", {
         order_id: orderId,
         payment_method: "upi",
       });
@@ -73,7 +75,7 @@ const PaymentPage = () => {
       }
     } catch (error) {
       console.error("Verification error:", error);
-      toast.error("Something went wrong. Please contact support.");
+      toast.error(error.response?.data?.error || "Something went wrong. Please contact support.");
     } finally {
       setVerifying(false);
     }
@@ -258,9 +260,9 @@ const PaymentPage = () => {
                   <FaWhatsapp /> WhatsApp Support
                 </button>
               </a>
-              <a href="mailto:support@sjsacademy.com" className="flex-1">
+              <a href="mailto:sjsglobaltech@gmail.com" className="flex-1">
                 <button className="w-full flex items-center justify-center gap-2 border border-primary-500 text-primary-600 py-2 rounded-lg hover:bg-primary-50 transition">
-                  <FaWhatsapp /> Email Support
+                  <FaEnvelope /> Email Support
                 </button>
               </a>
             </div>
