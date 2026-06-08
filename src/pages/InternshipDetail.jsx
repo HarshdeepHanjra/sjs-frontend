@@ -1,69 +1,68 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaArrowLeft, FaClock, FaRupeeSign, FaCheckCircle, FaWhatsapp, FaEnvelope } from 'react-icons/fa';
+import { FaArrowLeft, FaClock, FaRupeeSign, FaCheckCircle, FaWhatsapp, FaEnvelope, FaSpinner } from 'react-icons/fa';
+import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const InternshipDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [internship, setInternship] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [applying, setApplying] = useState(false);
 
-  const internships = {
-    1: { 
-      title: 'Data Science Internship', 
-      duration: '3 Months', 
-      fee: 6000, 
-      originalFee: 19999,
-      description: 'Learn Data Science from scratch with real-world projects. Get hands-on experience in Python, SQL, and Machine Learning.',
-      syllabus: ['Python Programming', 'Data Analysis', 'Machine Learning', 'SQL', 'Projects'],
-      benefits: ['Certificate', 'Live Projects', 'Mentorship', 'Placement Support']
-    },
-    2: { 
-      title: 'Web Development Internship', 
-      duration: '2 Months', 
-      fee: 0, 
-      originalFee: 14999,
-      description: 'Master MERN stack development. Build real websites and web applications.',
-      syllabus: ['HTML/CSS', 'JavaScript', 'React JS', 'Node JS', 'MongoDB'],
-      benefits: ['Live Coding', 'Portfolio', 'Certificate', 'Interview Prep']
-    },
-    3: { 
-      title: 'Digital Marketing Internship', 
-      duration: '2 Months', 
-      fee: 0, 
-      originalFee: 12999,
-      description: 'Learn SEO, Social Media Marketing, Google Ads, and Analytics.',
-      syllabus: ['SEO', 'Social Media', 'Google Ads', 'Analytics', 'Email Marketing'],
-      benefits: ['Free Certification', 'Live Campaigns', 'Industry Tools']
-    },
-    4: { 
-      title: 'Data Analytics Internship', 
-      duration: '3 Months', 
-      fee: 4999, 
-      originalFee: 29999,
-      description: 'Advanced Data Analytics program with Power BI, Tableau, and SQL.',
-      syllabus: ['Advanced Excel', 'SQL', 'Power BI', 'Tableau', 'Business Intelligence'],
-      benefits: ['Certificate', 'Job Guarantee', 'Industry Recognition']
-    },
-    5: { 
-      title: 'AI/ML Internship', 
-      duration: '4 Months', 
-      fee: 9999, 
-      originalFee: 49999,
-      description: 'Advanced AI/ML program with deep learning, NLP, and computer vision.',
-      syllabus: ['Python Advanced', 'Machine Learning', 'Deep Learning', 'NLP', 'Computer Vision'],
-      benefits: ['Certificate', 'Research Projects', 'Industry Mentorship']
-    },
-    6: { 
-      title: 'Python Developer Internship', 
-      duration: '2 Months', 
-      fee: 2999, 
-      originalFee: 19999,
-      description: 'Learn Python development with real-world projects.',
-      syllabus: ['Python Basics', 'OOP', 'Flask/Django', 'APIs', 'Database'],
-      benefits: ['Python Certificate', 'Portfolio', 'Mock Interviews']
+  // Fetch internship details from backend
+  useEffect(() => {
+    fetchInternshipDetails();
+  }, [id]);
+
+  // ✅ FIXED: Added /api/ prefix
+  const fetchInternshipDetails = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/api/internships/${id}`);
+      if (response.data.success) {
+        setInternship(response.data.internship);
+      } else {
+        toast.error('Internship not found');
+        navigate('/internship');
+      }
+    } catch (error) {
+      console.error('Failed to fetch internship:', error);
+      if (error.response?.status === 404) {
+        toast.error('Internship not found');
+        navigate('/internship');
+      } else {
+        toast.error('Failed to load internship details');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  const internship = internships[id];
+  const handleApply = () => {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Please login to apply for internship');
+      navigate('/login', { state: { returnUrl: `/internship/${id}` } });
+      return;
+    }
+    
+    navigate(`/internship-payment/${id}`, { state: { internship } });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-4xl text-primary-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading internship details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!internship) {
     return (
@@ -77,6 +76,15 @@ const InternshipDetail = () => {
       </div>
     );
   }
+
+  // Helper to get syllabus array (handle both array and string)
+  const syllabusItems = Array.isArray(internship.syllabus) 
+    ? internship.syllabus 
+    : internship.syllabus ? internship.syllabus.split(',').map(s => s.trim()) : [];
+  
+  const benefitsItems = Array.isArray(internship.benefits) 
+    ? internship.benefits 
+    : internship.benefits ? internship.benefits.split(',').map(b => b.trim()) : [];
 
   return (
     <div className="min-h-screen bg-gray-50 py-16">
@@ -97,6 +105,9 @@ const InternshipDetail = () => {
               ) : (
                 <span className="bg-orange-500 px-3 py-1 rounded-full text-sm">₹{internship.fee}</span>
               )}
+              <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+                {internship.mode || 'Online'}
+              </span>
             </div>
           </div>
 
@@ -108,22 +119,28 @@ const InternshipDetail = () => {
 
                 <h2 className="text-xl font-bold mb-4">What You'll Learn</h2>
                 <ul className="space-y-2 mb-6">
-                  {internship.syllabus.map((item, idx) => (
+                  {syllabusItems.map((item, idx) => (
                     <li key={idx} className="flex items-center gap-2">
                       <FaCheckCircle className="text-green-500" />
                       <span>{item}</span>
                     </li>
                   ))}
+                  {syllabusItems.length === 0 && (
+                    <li className="text-gray-500">Syllabus information coming soon...</li>
+                  )}
                 </ul>
 
                 <h2 className="text-xl font-bold mb-4">Benefits</h2>
                 <ul className="space-y-2">
-                  {internship.benefits.map((item, idx) => (
+                  {benefitsItems.map((item, idx) => (
                     <li key={idx} className="flex items-center gap-2">
                       <FaCheckCircle className="text-primary-500" />
                       <span>{item}</span>
                     </li>
                   ))}
+                  {benefitsItems.length === 0 && (
+                    <li className="text-gray-500">Benefits information coming soon...</li>
+                  )}
                 </ul>
               </div>
 
@@ -137,7 +154,15 @@ const InternshipDetail = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Mode:</span>
-                      <span className="font-semibold">Online</span>
+                      <span className="font-semibold">{internship.mode || 'Online'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Start Date:</span>
+                      <span className="font-semibold">{internship.startDate || 'Monthly Batch'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Slots Available:</span>
+                      <span className="font-semibold">{internship.slots || 'Limited'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Fee:</span>
@@ -145,23 +170,36 @@ const InternshipDetail = () => {
                         {internship.fee === 0 ? 'FREE' : `₹${internship.fee}`}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Original Fee:</span>
-                      <span className="text-gray-400 line-through">₹{internship.originalFee}</span>
-                    </div>
+                    {internship.originalFee && internship.fee > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Original Fee:</span>
+                        <span className="text-gray-400 line-through">₹{internship.originalFee}</span>
+                      </div>
+                    )}
+                    {internship.stipend && internship.stipend !== 'Unpaid' && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Stipend:</span>
+                        <span className="font-semibold text-green-600">{internship.stipend}</span>
+                      </div>
+                    )}
                   </div>
 
-                  <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition">
+                  <button
+                    onClick={handleApply}
+                    disabled={applying}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
+                  >
+                    {applying ? <FaSpinner className="animate-spin inline mr-2" /> : null}
                     Apply Now →
                   </button>
 
                   <div className="mt-4 space-y-2">
-                    <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">
+                    <a href="https://wa.me/918950026639" target="_blank" rel="noopener noreferrer">
                       <button className="w-full flex items-center justify-center gap-2 border border-green-500 text-green-600 py-2 rounded-lg hover:bg-green-50 transition">
                         <FaWhatsapp /> WhatsApp
                       </button>
                     </a>
-                    <a href="mailto:internship@sjsacademy.com">
+                    <a href="mailto:sjsglobaltech@gmail.com">
                       <button className="w-full flex items-center justify-center gap-2 border border-primary-500 text-primary-600 py-2 rounded-lg hover:bg-primary-50 transition">
                         <FaEnvelope /> Email
                       </button>
