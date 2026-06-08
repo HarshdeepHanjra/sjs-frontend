@@ -1,16 +1,15 @@
 import axios from 'axios';
 
-// ✅ DIRECT PRODUCTION URL - No environment variable
+// ✅ Production URL - Directly set
 const API_URL = 'https://sjs-backend-new.onrender.com/api';
 
-console.log('🔗 API Base URL:', API_URL);
+console.log('🔗 API URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
   }
 });
 

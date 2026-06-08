@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://sjs-backend-new.onrender.com', // ✅ Production backend URL
         changeOrigin: true,
       }
     }
