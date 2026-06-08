@@ -11,6 +11,7 @@ const ForgotPassword = () => {
   const [submitted, setSubmitted] = useState(false);
   const [resetLink, setResetLink] = useState('');
 
+  // ✅ FIXED: Added /api/ prefix
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -22,7 +23,7 @@ const ForgotPassword = () => {
     setLoading(true);
     
     try {
-      const response = await api.post('/auth/forgot-password', { email });
+      const response = await api.post('/api/auth/forgot-password', { email });
       
       if (response.data.success) {
         setSubmitted(true);
