@@ -2,8 +2,6 @@ import axios from 'axios';
 
 const API_URL = 'https://sjs-backend-new.onrender.com';
 
-console.log('🔗 API URL:', API_URL);
-
 const api = axios.create({
   baseURL: API_URL,
   timeout: 30000,
@@ -41,12 +39,15 @@ api.interceptors.response.use(
   }
 );
 
-// ✅ ADD THIS - Session object
 export const session = {
   getToken: () => localStorage.getItem('token'),
   getUser: () => {
     const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    try {
+      return user ? JSON.parse(user) : null;
+    } catch {
+      return null;
+    }
   },
   getUserType: () => localStorage.getItem('userType'),
   setUser: (user) => localStorage.setItem('user', JSON.stringify(user)),
