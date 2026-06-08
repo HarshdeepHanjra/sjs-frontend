@@ -41,9 +41,6 @@ const Navbar = () => {
 
   useEffect(() => {
     const getUserTypeFromSession = () => {
-      if (session && typeof session.getUserType === 'function') {
-        return session.getUserType();
-      }
       return localStorage.getItem('userType');
     };
     
