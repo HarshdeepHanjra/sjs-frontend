@@ -8,9 +8,15 @@ const CloudinaryUpload = ({ onUploadSuccess, buttonText = "Upload with Cloudinar
   const buttonRef = useRef(null);
   const isMounted = useRef(true);
 
-  // Cloudinary configuration
-  const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'your_cloud_name';
-  const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'sjs_payment_screenshots';
+  // ✅ FIXED: Use VITE_ prefix for Vite or REACT_APP_ for CRA
+  // Also add fallback values
+  const cloudName = import.meta.env?.VITE_CLOUDINARY_CLOUD_NAME || 
+                   process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 
+                   'dxxpeilta';  // Your actual cloud name
+  
+  const uploadPreset = import.meta.env?.VITE_CLOUDINARY_UPLOAD_PRESET || 
+                       process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 
+                       'sjs_payment_screenshots';  // Your actual upload preset
 
   useEffect(() => {
     isMounted.current = true;
@@ -27,7 +33,7 @@ const CloudinaryUpload = ({ onUploadSuccess, buttonText = "Upload with Cloudinar
               sources: ['local', 'camera'],
               multiple: false,
               cropping: false,
-              maxFileSize: 5000000,
+              maxFileSize: 5000000, // 5MB
               clientAllowedFormats: ['png', 'jpg', 'jpeg', 'webp'],
               showAdvancedOptions: false,
               styles: {
@@ -54,6 +60,7 @@ const CloudinaryUpload = ({ onUploadSuccess, buttonText = "Upload with Cloudinar
                 if (isMounted.current) {
                   toast.error("Upload widget error. Please try again.");
                 }
+                setUploading(false);
                 return;
               }
               
@@ -69,13 +76,18 @@ const CloudinaryUpload = ({ onUploadSuccess, buttonText = "Upload with Cloudinar
                 if (isMounted.current) {
                   toast.success('Screenshot uploaded successfully!');
                 }
+                setUploading(false);
+              } else if (result && result.event === 'queues-start') {
+                setUploading(true);
               } else if (result && result.event === 'close') {
+                setUploading(false);
                 console.log("Widget closed");
               }
             }
           );
         } catch (err) {
           console.error("Error creating widget:", err);
+          toast.error("Failed to initialize upload widget");
         }
       }
     };
@@ -102,7 +114,6 @@ const CloudinaryUpload = ({ onUploadSuccess, buttonText = "Upload with Cloudinar
       isMounted.current = false;
       if (widgetRef.current) {
         try {
-          // Don't destroy, just clear reference
           widgetRef.current = null;
         } catch (err) {
           console.error("Error cleaning up widget:", err);
