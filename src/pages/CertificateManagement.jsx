@@ -272,13 +272,13 @@ const CertificateManagement = () => {
     }
   };
 
-  // Filter certificates
+  // Filter certificates with null safety
   const filteredCertificates = certificates.filter(cert => {
     const matchesSearch = 
-      cert.certificate_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cert.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cert.student_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cert.course_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      (cert.certificate_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (cert.student_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (cert.student_email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (cert.course_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || cert.status === statusFilter;
     
@@ -333,7 +333,9 @@ const CertificateManagement = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
-                <FaSpinner className="absolute left-3 top-3 text-gray-400" />
+                <svg className="absolute left-3 top-3 text-gray-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
               <div>
                 <select
@@ -449,7 +451,7 @@ const CertificateManagement = () => {
                       <td className="px-6 py-4 text-sm font-semibold">{cert.score}%</td>
                       <td className="px-6 py-4">
                         {getStatusBadge(cert.status)}
-                      </td>
+                       </td>
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
                           <button
@@ -474,9 +476,8 @@ const CertificateManagement = () => {
                             <FaTrashAlt size={18} />
                           </button>
                         </div>
-                        </div>
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ))}
                 </tbody>
               </table>
@@ -500,7 +501,7 @@ const CertificateManagement = () => {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold">Generate Certificate</h3>
                 <button onClick={() => setShowGenerateModal(false)} className="text-gray-500 hover:text-gray-700">
-                  ×
+                  <span className="text-2xl">&times;</span>
                 </button>
               </div>
 
