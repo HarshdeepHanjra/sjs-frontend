@@ -22,6 +22,7 @@ const ResetPassword = () => {
     verifyToken();
   }, [token]);
 
+  // ✅ FIXED: Added /api/ prefix
   const verifyToken = async () => {
     if (!token) {
       setValidToken(false);
@@ -30,7 +31,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await api.get(`/auth/verify-reset-token?token=${token}`);
+      const response = await api.get(`/api/auth/verify-reset-token?token=${token}`);
       setValidToken(response.data.valid);
     } catch (error) {
       console.error('Token verification error:', error);
@@ -40,6 +41,7 @@ const ResetPassword = () => {
     }
   };
 
+  // ✅ FIXED: Added /api/ prefix
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -61,7 +63,7 @@ const ResetPassword = () => {
     setLoading(true);
     
     try {
-      const response = await api.post('/auth/reset-password', {
+      const response = await api.post('/api/auth/reset-password', {
         token,
         new_password: password
       });
