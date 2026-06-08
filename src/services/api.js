@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// ✅ Production URL - Directly set
+// ✅ Production URL - Direct
 const API_URL = 'https://sjs-backend-new.onrender.com/api';
 
 console.log('🔗 API URL:', API_URL);
@@ -10,10 +10,11 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json'
   }
 });
 
-// Request interceptor to add token
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -37,9 +38,6 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('❌ Response Error:', error.response?.status, error.response?.data);
-    if (error.code === 'ERR_NETWORK') {
-      console.error('⚠️ Network error - Backend URL:', API_URL);
-    }
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');

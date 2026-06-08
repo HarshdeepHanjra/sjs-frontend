@@ -7,12 +7,24 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://sjs-backend-new.onrender.com', // ✅ Production backend URL
+        target: 'https://sjs-backend-new.onrender.com',
         changeOrigin: true,
       }
     }
   },
   css: {
     postcss: './postcss.config.js',
+  },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-icons': ['react-icons'],
+          'vendor-utils': ['axios', 'react-hot-toast', 'framer-motion']
+        }
+      }
+    }
   }
 })
