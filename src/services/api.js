@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// ✅ Correct base URL (without /api)
+// ✅ Correct base URL (without /api at the end)
 const API_URL = 'https://sjs-backend-new.onrender.com';
 
 console.log('🔗 API URL:', API_URL);
@@ -10,6 +10,7 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json'
   }
 });
 

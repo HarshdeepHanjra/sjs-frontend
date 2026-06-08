@@ -53,26 +53,16 @@
 //         password: formData.password
 //       });
       
-//       console.log('Registration response:', response.data);
-      
 //       if (response.data.success) {
 //         toast.success('Registration successful! Please login.');
+//         // Redirect to login page, not dashboard
 //         setTimeout(() => navigate('/login'), 2000);
 //       } else {
 //         toast.error(response.data.error || 'Registration failed');
 //       }
 //     } catch (error) {
 //       console.error('Registration error:', error);
-      
-//       if (error.response?.status === 400) {
-//         toast.error(error.response.data?.error || 'Invalid input');
-//       } else if (error.response?.status === 409) {
-//         toast.error('Email already registered. Please login instead.');
-//       } else if (error.code === 'ERR_NETWORK') {
-//         toast.error('Cannot connect to server. Please make sure backend is running.');
-//       } else {
-//         toast.error(error.response?.data?.error || 'Registration failed. Please try again.');
-//       }
+//       toast.error(error.response?.data?.error || 'Registration failed');
 //     } finally {
 //       setLoading(false);
 //     }
@@ -204,8 +194,6 @@
 
 // export default Register;
 
-
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -241,6 +229,23 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!formData.name.trim()) {
+      toast.error('Please enter your full name');
+      return;
+    }
+    
+    if (!formData.email.trim()) {
+      toast.error('Please enter your email');
+      return;
+    }
+    
+    // Simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -254,23 +259,42 @@ const Register = () => {
     setLoading(true);
     
     try {
-      const response = await api.post('/auth/student/register', {
+      // ✅ Correct API endpoint (without /api in baseURL, but /api in path)
+      const response = await api.post('/api/auth/student/register', {
         name: formData.name,
         email: formData.email,
-        phone: formData.phone,
+        phone: formData.phone || '',
         password: formData.password
       });
       
+      console.log('Registration response:', response.data);
+      
       if (response.data.success) {
         toast.success('Registration successful! Please login.');
-        // Redirect to login page, not dashboard
+        // Clear form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        password: '',
+        confirmPassword: ''
+      });
+        // Redirect to login page after 2 seconds
         setTimeout(() => navigate('/login'), 2000);
       } else {
         toast.error(response.data.error || 'Registration failed');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.response?.data?.error || 'Registration failed');
+      
+      // Better error handling
+      if (error.response?.data?.error) {
+        toast.error(error.response.data.error);
+      } else if (error.code === 'ERR_NETWORK') {
+        toast.error('Cannot connect to server. Please check your internet connection.');
+      } else {
+        toast.error('Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -335,7 +359,7 @@ const Register = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Enter your phone number"
+                  placeholder="Enter your phone number (optional)"
                 />
               </div>
 
@@ -379,13 +403,23 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={loading || !passwordMatch}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-lg transition duration-300 transform hover:scale-105 disabled:opacity-50"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-lg transition duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
               >
-                {loading ? 'Creating Account...' : 'Register Now →'}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Creating Account...
+                  </span>
+                ) : (
+                  'Register Now →'
+                )}
               </button>
             </form>
 
-            <div className="p-4 text-center">
+            <div className="p-6 text-center border-t border-gray-100">
               <p className="text-gray-600">
                 Already have an account?{' '}
                 <Link to="/login" className="text-primary-600 font-semibold hover:underline">
