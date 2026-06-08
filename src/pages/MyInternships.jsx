@@ -15,6 +15,7 @@ const MyInternships = () => {
     completed: 0
   });
 
+  // ✅ FIXED: Added /api/ prefix
   const fetchMyInternships = async (silent = false) => {
     if (!silent) {
       setLoading(true);
@@ -32,8 +33,8 @@ const MyInternships = () => {
 
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      // ✅ Use the correct endpoint
-      const response = await api.get('/user/my-internships', config);
+      // ✅ Use the correct endpoint with /api/ prefix
+      const response = await api.get('/api/user/my-internships', config);
       
       console.log("My internships response:", response.data);
       
