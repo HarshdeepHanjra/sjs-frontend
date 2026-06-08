@@ -20,11 +20,12 @@ const CourseDetail = () => {
   const { addToCart } = useCart();
 
   // Fetch course details from backend API - REAL TIME DATA
+  // ✅ FIXED: Added /api/ prefix
   const fetchCourseDetails = async () => {
     setLoading(true);
     try {
       // Fetch from backend API (always gets latest data from database)
-      const response = await api.get(`/courses/${id}`);
+      const response = await api.get(`/api/courses/${id}`);
       
       if (response.data) {
         setCourse(response.data);
@@ -148,6 +149,23 @@ const CourseDetail = () => {
     );
   }
 
+  // Handle syllabus display (array or string)
+  const syllabusItems = Array.isArray(course.syllabus) 
+    ? course.syllabus 
+    : course.syllabus ? course.syllabus.split(',').map(s => s.trim()) : [];
+  
+  const projectsItems = Array.isArray(course.projects) 
+    ? course.projects 
+    : course.projects ? course.projects.split(',').map(p => p.trim()) : [];
+  
+  const toolsItems = Array.isArray(course.tools) 
+    ? course.tools 
+    : course.tools ? course.tools.split(',').map(t => t.trim()) : [];
+  
+  const benefitsItems = Array.isArray(course.benefits) 
+    ? course.benefits 
+    : course.benefits ? course.benefits.split(',').map(b => b.trim()) : [];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -165,7 +183,7 @@ const CourseDetail = () => {
                 </div>
                 <div className="flex items-center">
                   <FaUsers />
-                  <span className="ml-1">{course.students || 0}+ students</span>
+                  <span className="ml-1">{course.students_enrolled || 0}+ students</span>
                 </div>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">{course.name}</h1>
@@ -198,9 +216,6 @@ const CourseDetail = () => {
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
               <div className="text-center">
-                {course.originalPrice && (
-                  <p className="text-gray-300 line-through">₹{course.originalPrice.toLocaleString()}</p>
-                )}
                 <p className="text-4xl font-bold mb-2">₹{course.price?.toLocaleString()}</p>
                 <p className="text-sm mb-4">Including all taxes</p>
                 <div className="space-y-2 text-sm">
@@ -246,12 +261,14 @@ const CourseDetail = () => {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <h2 className="text-2xl font-bold mb-6">Course Syllabus</h2>
                   <div className="grid md:grid-cols-2 gap-4">
-                    {course.syllabus && course.syllabus.map((item, index) => (
+                    {syllabusItems.length > 0 ? syllabusItems.map((item, index) => (
                       <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <FaCheckCircle className="text-green-500" />
                         <span>{item}</span>
                       </div>
-                    ))}
+                    )) : (
+                      <p className="text-gray-500">Syllabus information coming soon...</p>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -260,12 +277,14 @@ const CourseDetail = () => {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <h2 className="text-2xl font-bold mb-6">Real-World Projects</h2>
                   <div className="space-y-4">
-                    {course.projects && course.projects.map((project, index) => (
+                    {projectsItems.length > 0 ? projectsItems.map((project, index) => (
                       <div key={index} className="p-4 border rounded-lg hover:shadow-md transition">
                         <h3 className="font-bold text-lg mb-2">{project}</h3>
                         <p className="text-gray-600">Hands-on project with real datasets and industry use cases</p>
                       </div>
-                    ))}
+                    )) : (
+                      <p className="text-gray-500">Project details coming soon...</p>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -274,11 +293,13 @@ const CourseDetail = () => {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <h2 className="text-2xl font-bold mb-6">Tools You'll Master</h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {course.tools && course.tools.map((tool, index) => (
+                    {toolsItems.length > 0 ? toolsItems.map((tool, index) => (
                       <div key={index} className="p-4 bg-gray-50 rounded-lg text-center">
                         <p className="font-semibold">{tool}</p>
                       </div>
-                    ))}
+                    )) : (
+                      <p className="text-gray-500 col-span-4 text-center">Tools information coming soon...</p>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -287,12 +308,14 @@ const CourseDetail = () => {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <h2 className="text-2xl font-bold mb-6">What You'll Get</h2>
                   <div className="grid md:grid-cols-2 gap-4">
-                    {course.benefits && course.benefits.map((benefit, index) => (
+                    {benefitsItems.length > 0 ? benefitsItems.map((benefit, index) => (
                       <div key={index} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
                         <FaCheckCircle className="text-green-500" />
                         <span>{benefit}</span>
                       </div>
-                    ))}
+                    )) : (
+                      <p className="text-gray-500 col-span-2">Benefits information coming soon...</p>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -305,7 +328,7 @@ const CourseDetail = () => {
       <section className="py-16 bg-gradient-to-r from-primary-600 to-primary-800 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Start Your Journey?</h2>
-          <p className="text-xl mb-8">Join {course.students || 0}+ students who transformed their careers</p>
+          <p className="text-xl mb-8">Join {course.students_enrolled || 0}+ students who transformed their careers</p>
           <button
             onClick={handleAddToCart}
             disabled={addingToCart}
