@@ -45,7 +45,7 @@ const Internship = () => {
   const fetchInternships = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/internships');
+      const response = await api.get('/api/internships/');
       if (response.data.success) {
         setInternships(response.data.internships);
       } else {
