@@ -211,7 +211,7 @@ const AdminPanel = () => {
     setLoadingCertificates(true);
     try {
       const config = getAuthConfig();
-      const response = await api.get("/api/admin/certificates", config);
+      const response = await api.get("/api/certificates/admin/certificates", config);
       if (response.data.success) {
         setCertificates(response.data.certificates);
       }
@@ -313,7 +313,7 @@ const AdminPanel = () => {
     try {
       const config = getAuthConfig();
       const response = await api.delete(
-        `/api/admin/certificates/${certificateToDelete.id}`,
+        `/api/certificates/admin/certificates${certificateToDelete.id}`,
         config,
       );
 
