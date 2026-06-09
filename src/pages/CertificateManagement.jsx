@@ -236,7 +236,7 @@ const CertificateManagement = () => {
         
         for (const cert of certificates) {
           try {
-            await api.delete(`/api/admin/certificates/${cert.id}`, config);
+            await api.delete(`/api/certificates/admin/certificates${cert.id}`, config);
             successCount++;
           } catch (error) {
             console.error(`Failed to delete certificate ${cert.id}:`, error);
