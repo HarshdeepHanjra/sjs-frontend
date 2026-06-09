@@ -33,7 +33,7 @@ const CertificateManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await api.get('/api/admin/certificates', config);
+      const response = await api.get('/api/certificates/admin/certificates', config);
       if (response.data.success) {
         setCertificates(response.data.certificates);
         setSelectedCertificates([]);
