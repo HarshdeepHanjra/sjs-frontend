@@ -116,7 +116,7 @@ const CertificateManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await api.delete(`/api/admin/certificates/${selectedCertificate.id}`, config);
+      const response = await api.delete(`/api/certificates/admin/certificates${selectedCertificate.id}`, config);
       
       if (response.data.success) {
         toast.success('Certificate permanently deleted from database!');
@@ -199,7 +199,7 @@ const CertificateManagement = () => {
         
         for (const certId of selectedCertificates) {
           try {
-            await api.delete(`/api/admin/certificates/${certId}`, config);
+            await api.delete(`/api/certificates/admin/certificates${certId}`, config);
             successCount++;
           } catch (error) {
             console.error(`Failed to delete certificate ${certId}:`, error);
@@ -236,7 +236,7 @@ const CertificateManagement = () => {
         
         for (const cert of certificates) {
           try {
-            await api.delete(`/api/admin/certificates/${cert.id}`, config);
+            await api.delete(`/api/certificates/admin/certificates${cert.id}`, config);
             successCount++;
           } catch (error) {
             console.error(`Failed to delete certificate ${cert.id}:`, error);
