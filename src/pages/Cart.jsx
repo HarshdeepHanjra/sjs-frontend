@@ -174,7 +174,7 @@ const Cart = () => {
       console.log("Creating order with data:", orderData);
       
       // ✅ FIXED: Added /api/ prefix
-      const response = await api.post('/api/cart/create-order', orderData);
+      const response = await api.post('/api/cart/create-order/', orderData);
       console.log("Order creation response:", response.data);
       
       if (response.data.success) {
