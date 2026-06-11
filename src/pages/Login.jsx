@@ -353,117 +353,105 @@ const Login = () => {
   };
 
   const handleAdminLogin = async () => {
-    try {
-      const response = await api.post('/api/auth/admin/login', {
-        email: formData.email,
-        password: formData.password
+  try {
+    const response = await api.post('/api/auth/admin/login', {
+      email: formData.email,
+      password: formData.password
+    });
+    
+    console.log("Admin login response:", response.data);
+    
+    if (response.data.requires_otp) {
+      setPendingLoginData({
+        type: 'admin',
+        sessionId: response.data.session_id,
+        email: formData.email
       });
+      setShowOtpModal(true);
+      setTimer(60);
+      toast.success(response.data.message);
+      return;
+    }
+    
+    if (response.data.access_token) {
+      const adminData = {
+        ...response.data.admin,
+        userType: 'admin',
+        role: 'admin'
+      };
       
-      console.log("Admin login response:", response.data);
+      login(response.data.access_token, adminData, 'admin');
+      toast.success(`Welcome, ${response.data.admin.full_name || 'Admin'}!`);
+      navigate('/admin');
+    }
+  } catch (error) {
+    console.error('Admin login error:', error);
+    if (error.response?.status === 401) {
+      toast.error('Invalid credentials');
+    } else {
+      toast.error('Login failed. Please try again.');
+    }
+  }
+};
+
+const handleVerifyOtp = async () => {
+  if (!otp || otp.length !== 6) {
+    toast.error('Please enter 6-digit OTP');
+    return;
+  }
+
+  setOtpSending(true);
+  try {
+    let response;
+    
+    if (pendingLoginData?.type === 'student') {
+      response = await api.post('/api/auth/student/login', {
+        email: pendingLoginData.email,
+        password: formData.password,
+        otp: otp,
+        session_id: pendingLoginData.sessionId
+      });
+    } else {
+      response = await api.post('/api/auth/admin/login', {
+        email: pendingLoginData.email,
+        password: formData.password,
+        otp: otp,
+        session_id: pendingLoginData.sessionId
+      });
+    }
+
+    if (response.data.access_token) {
+      toast.success('Login successful!');
+      setShowOtpModal(false);
+      setOtp('');
       
-      if (response.data.requires_otp) {
-        setAdminId(response.data.admin_id);
-        setShowOtpModal(true);
-        setTimer(60);
-        toast.success(response.data.message);
-        return;
-      }
-      
-      if (response.data.access_token) {
+      if (pendingLoginData?.type === 'student') {
+        const studentData = {
+          ...response.data.student,
+          userType: 'student',
+          role: 'student'
+        };
+        login(response.data.access_token, studentData, 'student');
+        navigate('/dashboard');
+      } else {
         const adminData = {
           ...response.data.admin,
           userType: 'admin',
           role: 'admin'
         };
-        
         login(response.data.access_token, adminData, 'admin');
-        toast.success(`Welcome, ${response.data.admin.full_name || 'Admin'}!`);
         navigate('/admin');
       }
-    } catch (error) {
-      console.error('Admin login error:', error);
-      if (error.response?.status === 401) {
-        toast.error('Invalid credentials');
-      } else {
-        toast.error('Login failed. Please try again.');
-      }
+    } else {
+      toast.error(response.data.error || 'Invalid OTP');
     }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otp || otp.length !== 6) {
-      toast.error('Please enter 6-digit OTP');
-      return;
-    }
-
-    setOtpSending(true);
-    try {
-      let response;
-      if (userType === 'student') {
-        response = await api.post('/api/auth/verify-otp', {
-          student_id: studentId,
-          otp: otp
-        });
-      } else {
-        response = await api.post('/api/auth/verify-otp', {
-          admin_id: adminId,
-          otp: otp
-        });
-      }
-
-      if (response.data.verified) {
-        toast.success('OTP verified successfully!');
-        setShowOtpModal(false);
-        setOtp('');
-        
-        // Complete login after OTP verification
-        if (userType === 'student') {
-          const loginResponse = await api.post('/api/auth/student/login', {
-            email: formData.email,
-            password: formData.password,
-            is_otp_verified: true,
-            otp: otp
-          });
-          
-          if (loginResponse.data.access_token) {
-            const studentData = {
-              ...loginResponse.data.student,
-              userType: 'student',
-              role: 'student'
-            };
-            login(loginResponse.data.access_token, studentData, 'student');
-            toast.success(`Welcome back, ${loginResponse.data.student.name}!`);
-            navigate('/dashboard');
-          }
-        } else {
-          const loginResponse = await api.post('/api/auth/admin/login', {
-            email: formData.email,
-            password: formData.password,
-            is_otp_verified: true,
-            otp: otp
-          });
-          
-          if (loginResponse.data.access_token) {
-            const adminData = {
-              ...loginResponse.data.admin,
-              userType: 'admin',
-              role: 'admin'
-            };
-            login(loginResponse.data.access_token, adminData, 'admin');
-            toast.success(`Welcome, ${loginResponse.data.admin.full_name || 'Admin'}!`);
-            navigate('/admin');
-          }
-        }
-      } else {
-        toast.error(response.data.error || 'Invalid OTP');
-      }
-    } catch (error) {
-      console.error('OTP verification error:', error);
-      toast.error('Failed to verify OTP');
-    } finally {
-      setOtpSending(false);
-    }
-  };
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    toast.error(error.response?.data?.error || 'Failed to verify OTP');
+  } finally {
+    setOtpSending(false);
+  }
+};
 
   const handleResendOtp = async () => {
     setTimer(60);
@@ -500,19 +488,19 @@ const Login = () => {
     setLoading(false);
   };
 
-  const fillDemoCredentials = () => {
-    if (userType === 'student') {
-      setFormData({
-        email: 'student@example.com',
-        password: 'student123'
-      });
-    } else {
-      setFormData({
-        email: 'admin@sjsacademy.com',
-        password: 'Admin@123'
-      });
-    }
-  };
+  // const fillDemoCredentials = () => {
+  //   if (userType === 'student') {
+  //     setFormData({
+  //       email: 'student@example.com',
+  //       password: 'student123'
+  //     });
+  //   } else {
+  //     setFormData({
+  //       email: 'admin@sjsacademy.com',
+  //       password: 'Admin@123'
+  //     });
+  //   }
+  // };
 
   return (
     <>
