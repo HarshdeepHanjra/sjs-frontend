@@ -409,59 +409,86 @@ const Login = () => {
   };
 
   // New function for OTP verification
-  const handleVerifyOtp = async () => {
-    if (!otp || otp.length !== 6) {
-      toast.error('Please enter 6-digit OTP');
-      return;
-    }
+  // Update your handleVerifyOtp function
 
-    setOtpSending(true);
-    try {
-      const endpoint = userType === 'student' ? '/api/auth/student/login' : '/api/auth/admin/login';
-      const response = await api.post(endpoint, {
-        email: formData.email,
-        password: formData.password,
-        otp: otp,
-        session_id: sessionId
-      });
+const handleVerifyOtp = async () => {
+  if (!otp || otp.length !== 6) {
+    toast.error('Please enter 6-digit OTP');
+    return;
+  }
 
-      if (response.data.access_token) {
-        toast.success('Login successful!');
-        setShowOtpModal(false);
-        setOtp('');
+  setOtpSending(true);
+  try {
+    const endpoint = userType === 'student' ? '/api/auth/student/login' : '/api/auth/admin/login';
+    
+    console.log('Verifying OTP with:', {
+      email: formData.email,
+      session_id: sessionId,
+      otp_length: otp.length
+    });
+    
+    const response = await api.post(endpoint, {
+      email: formData.email,
+      password: formData.password,
+      otp: otp,
+      session_id: sessionId
+    });
+
+    console.log('OTP verification response:', response.data);
+
+    if (response.data.access_token) {
+      toast.success('Login successful!');
+      setShowOtpModal(false);
+      setOtp('');
+      
+      if (userType === 'student') {
+        const studentData = {
+          ...response.data.student,
+          userType: 'student',
+          role: 'student'
+        };
+        login(response.data.access_token, studentData, 'student');
         
-        if (userType === 'student') {
-          const studentData = {
-            ...response.data.student,
-            userType: 'student',
-            role: 'student'
-          };
-          login(response.data.access_token, studentData, 'student');
-          
-          // Check for return URL
-          const urlParams = new URLSearchParams(window.location.search);
-          const returnUrl = urlParams.get('returnUrl');
-          if (returnUrl) {
-            navigate(decodeURIComponent(returnUrl));
-          } else {
-            navigate('/home');
-          }
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('returnUrl');
+        if (returnUrl) {
+          navigate(decodeURIComponent(returnUrl));
         } else {
-          const adminData = {
-            ...response.data.admin,
-            userType: 'admin',
-            role: 'admin'
-          };
-          login(response.data.access_token, adminData, 'admin');
-          navigate('/admin');
+          navigate('/home');
         }
+      } else {
+        const adminData = {
+          ...response.data.admin,
+          userType: 'admin',
+          role: 'admin'
+        };
+        login(response.data.access_token, adminData, 'admin');
+        navigate('/admin');
       }
-    } catch (error) {
-      toast.error(error.response?.data?.error || 'Invalid OTP');
-    } finally {
-      setOtpSending(false);
+    } else {
+      toast.error(response.data.error || 'Verification failed');
     }
-  };
+  } catch (error) {
+    console.error('OTP verification error - Full details:', error);
+    console.error('Error response:', error.response);
+    console.error('Error status:', error.response?.status);
+    console.error('Error data:', error.response?.data);
+    
+    // Better error messages
+    if (error.response?.status === 401) {
+      toast.error(error.response?.data?.error || 'Invalid or expired OTP');
+    } else if (error.response?.status === 500) {
+      toast.error('Server error. Please try again.');
+      console.error('Server error details:', error.response?.data);
+    } else if (error.code === 'ERR_NETWORK') {
+      toast.error('Network error. Check your connection.');
+    } else {
+      toast.error(error.response?.data?.error || 'Verification failed. Please try again.');
+    }
+  } finally {
+    setOtpSending(false);
+  }
+};
 
   // New function for resending OTP
   const handleResendOtp = async () => {
