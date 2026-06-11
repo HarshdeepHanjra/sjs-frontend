@@ -28,8 +28,8 @@ const Cart = () => {
     const handlePaymentApproved = (event) => {
       console.log("Payment approved, clearing cart...", event.detail);
       clearCart();
-      localStorage.removeItem('sjs_cart');
-      localStorage.removeItem('pendingOrder');
+      sessionStorage.removeItem('sjs_cart');
+      sessionStorage.removeItem('pendingOrder');
       toast.success('Thank you for your purchase! Your cart has been cleared.');
     };
     
@@ -43,8 +43,8 @@ const Cart = () => {
   // Check if user is logged in and token is valid
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      const userType = localStorage.getItem('userType');
+      const token = sessionStorage.getItem('token');
+      const userType = sessionStorage.getItem('userType');
       
       console.log("Cart - Auth Check:", { token: !!token, userType });
       
@@ -64,14 +64,14 @@ const Cart = () => {
         if (response.data.valid) {
           // User is authenticated
         } else {
-          localStorage.clear();
+          sessionStorage.clear();
           toast.error('Session expired. Please login again.');
           navigate('/login', { state: { returnUrl: '/cart' } });
         }
       } catch (error) {
         console.error('Token verification failed:', error);
         if (error.response?.status === 401) {
-          localStorage.clear();
+          sessionStorage.clear();
           toast.error('Session expired. Please login again.');
           navigate('/login', { state: { returnUrl: '/cart' } });
         } else {
@@ -150,7 +150,7 @@ const Cart = () => {
       return;
     }
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) {
       toast.error('Please login to proceed');
       navigate('/login', { state: { returnUrl: '/cart' } });
@@ -184,7 +184,7 @@ const Cart = () => {
           courses: response.data.courses,
           timestamp: new Date().toISOString()
         };
-        localStorage.setItem('pendingOrder', JSON.stringify(orderInfo));
+        sessionStorage.setItem('pendingOrder', JSON.stringify(orderInfo));
         
         navigate('/payment-verification', { state: orderInfo });
       } else {
@@ -195,7 +195,7 @@ const Cart = () => {
       
       if (error.response?.status === 401) {
         toast.error('Session expired. Please login again.');
-        localStorage.clear();
+        sessionStorage.clear();
         navigate('/login', { state: { returnUrl: '/cart' } });
       } else {
         toast.error(error.response?.data?.error || 'Failed to process checkout');

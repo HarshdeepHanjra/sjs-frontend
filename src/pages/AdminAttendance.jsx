@@ -23,7 +23,7 @@ const AdminAttendance = () => {
   // ✅ FIXED: Added /api/ prefix
   const fetchCourses = async () => {
     try {
-      const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const response = await api.get('/api/courses', config);
       setCourses(response.data.courses);
@@ -38,7 +38,7 @@ const AdminAttendance = () => {
     setLoadingStudents(true);
     try {
       console.log('Fetching students for course:', courseId);
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const response = await api.get(`/api/admin/attendance/courses/${courseId}/students`, config);
       console.log('Students response:', response.data);
@@ -73,7 +73,7 @@ const AdminAttendance = () => {
   // ✅ FIXED: Added /api/ prefix
   const fetchExistingAttendance = async (courseId, date) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const response = await api.get(`/api/admin/attendance/course/${courseId}/date/${date}`, config);
       if (response.data.success && response.data.attendances.length > 0) {
@@ -142,7 +142,7 @@ const AdminAttendance = () => {
 
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const response = await api.post('/api/admin/attendance/mark', {
         course_id: selectedCourse,
@@ -169,7 +169,7 @@ const AdminAttendance = () => {
     if (!selectedCourse) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const response = await api.get(`/api/admin/attendance/summary/${selectedCourse}`, config);
       if (response.data.success) {

@@ -114,7 +114,7 @@ const AdminPanel = () => {
 
   // ✅ Helper function to get auth headers with proper configuration
   const getAuthConfig = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       throw new Error("No token found");
     }
@@ -142,9 +142,9 @@ const AdminPanel = () => {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userType = localStorage.getItem("userType");
-    const userData = localStorage.getItem("user") || localStorage.getItem("userData");
+    const token = sessionStorage.getItem("token");
+    const userType = sessionStorage.getItem("userType");
+    const userData = sessionStorage.getItem("user") || sessionStorage.getItem("userData");
 
     console.log("AdminPanel - Auth Check:", {
       token: !!token,
@@ -260,7 +260,7 @@ const AdminPanel = () => {
 
   const handleDownloadCertificate = async (certificate) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const response = await api.get(
         `/api/certificates/download/${certificate.certificate_id}`,
@@ -704,10 +704,10 @@ const AdminPanel = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userData");
-    localStorage.removeItem("userType");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("userData");
+    sessionStorage.removeItem("userType");
     sessionStorage.clear();
     toast.success("Logged out successfully");
     navigate("/login");

@@ -14,7 +14,7 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -28,9 +28,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('userType');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('userType');
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
@@ -40,25 +40,25 @@ api.interceptors.response.use(
 );
 
 export const session = {
-  getToken: () => localStorage.getItem('token'),
+  getToken: () => sessionStorage.getItem('token'),
   getUser: () => {
-    const user = localStorage.getItem('user');
+    const user = sessionStorage.getItem('user');
     try {
       return user ? JSON.parse(user) : null;
     } catch {
       return null;
     }
   },
-  getUserType: () => localStorage.getItem('userType'),
-  setUser: (user) => localStorage.setItem('user', JSON.stringify(user)),
-  setUserType: (userType) => localStorage.setItem('userType', userType),
+  getUserType: () => sessionStorage.getItem('userType'),
+  setUser: (user) => sessionStorage.setItem('user', JSON.stringify(user)),
+  setUserType: (userType) => sessionStorage.setItem('userType', userType),
   clear: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('userType');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('userType');
   },
   isAuthenticated: () => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     return !!token;
   }
 };

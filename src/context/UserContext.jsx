@@ -37,7 +37,7 @@ export const UserProvider = ({ children }) => {
       console.log("Payment approved event received:", event.detail);
 
       // Refresh user data to show new courses
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       if (token) {
         try {
           // ✅ Use verify-token endpoint instead of /user/profile
@@ -54,7 +54,7 @@ export const UserProvider = ({ children }) => {
             };
 
             setUser(mergedUser);
-            localStorage.setItem("user", JSON.stringify(mergedUser));
+            sessionStorage.setItem("user", JSON.stringify(mergedUser));
 
             console.log("User data refreshed after payment approval");
             toast.success("Your courses have been updated!");
@@ -90,7 +90,7 @@ export const UserProvider = ({ children }) => {
 
       if (e.key === "token" && e.newValue !== e.oldValue) {
         if (!e.newValue && e.oldValue) {
-          const currentToken = localStorage.getItem("token");
+          const currentToken = sessionStorage.getItem("token");
           if (currentToken !== e.oldValue) {
             console.log("Token removed in another tab, clearing session");
             clearAuth();
@@ -105,10 +105,10 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   const restoreSession = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     // Try both 'user' and 'userData' for backward compatibility
-    const userData = localStorage.getItem("user") || localStorage.getItem("userData");
-    const userType = localStorage.getItem("userType");
+    const userData = sessionStorage.getItem("user") || sessionStorage.getItem("userData");
+    const userType = sessionStorage.getItem("userType");
 
     console.log("Restoring session:", {
       tokenExists: !!token,
@@ -148,10 +148,10 @@ export const UserProvider = ({ children }) => {
             setIsAuthenticated(true);
             sessionStorage.setItem("tabToken", token);
             sessionStorage.setItem("tabUserType", finalUser.role);
-            localStorage.setItem("currentTabId", tabId);
+            sessionStorage.setItem("currentTabId", tabId);
             // Ensure user data is stored consistently
-            localStorage.setItem("user", JSON.stringify(finalUser));
-            localStorage.setItem("userType", finalUser.role);
+            sessionStorage.setItem("user", JSON.stringify(finalUser));
+            sessionStorage.setItem("userType", finalUser.role);
             console.log("Session restored successfully for:", finalUser.name);
           } else {
             console.log("Role mismatch, clearing session");
@@ -181,11 +181,11 @@ export const UserProvider = ({ children }) => {
   };
 
   const clearAuth = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userData");
-    localStorage.removeItem("userType");
-    localStorage.removeItem("currentTabId");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("userData");
+    sessionStorage.removeItem("userType");
+    sessionStorage.removeItem("currentTabId");
 
     sessionStorage.removeItem("tabToken");
     sessionStorage.removeItem("tabUserType");
@@ -202,10 +202,10 @@ export const UserProvider = ({ children }) => {
     clearAuth();
 
     // Store consistently using 'user' key
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("userType", userType);
-    localStorage.setItem("currentTabId", tabId);
+    sessionStorage.setItem("token", token);
+    sessionStorage.setItem("user", JSON.stringify(userData));
+    sessionStorage.setItem("userType", userType);
+    sessionStorage.setItem("currentTabId", tabId);
 
     sessionStorage.setItem("tabToken", token);
     sessionStorage.setItem("tabUserType", userType);
@@ -227,13 +227,13 @@ export const UserProvider = ({ children }) => {
     console.log("Logging out from tab:", tabId);
 
     const logoutData = JSON.stringify({ time: Date.now(), tabId: tabId });
-    localStorage.setItem("logout-event", logoutData);
+    sessionStorage.setItem("logout-event", logoutData);
 
     clearAuth();
 
     setTimeout(() => {
-      if (localStorage.getItem("logout-event") === logoutData) {
-        localStorage.removeItem("logout-event");
+      if (sessionStorage.getItem("logout-event") === logoutData) {
+        sessionStorage.removeItem("logout-event");
       }
     }, 100);
   };
@@ -242,7 +242,7 @@ export const UserProvider = ({ children }) => {
     if (user) {
       const newUser = { ...user, ...updatedData };
       setUser(newUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
+      sessionStorage.setItem('user', JSON.stringify(newUser));
     }
   };
 
@@ -258,8 +258,8 @@ export const UserProvider = ({ children }) => {
           userType: verifiedUser.role,
         };
         setUser(updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        localStorage.setItem("userType", verifiedUser.role);
+        sessionStorage.setItem("user", JSON.stringify(updatedUser));
+        sessionStorage.setItem("userType", verifiedUser.role);
         sessionStorage.setItem("tabUserType", verifiedUser.role);
         return updatedUser;
       }

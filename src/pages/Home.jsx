@@ -67,7 +67,7 @@ const Home = () => {
   const handleDemoBooking = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       await api.post('/api/demo/book', demoForm, config);
       toast.success('Demo class booked successfully! We will contact you soon.');
@@ -83,7 +83,7 @@ const Home = () => {
   const handleInquiry = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       await api.post('/api/contact/inquiry', inquiryForm, config);
       toast.success('Message sent successfully! We will get back to you soon.');

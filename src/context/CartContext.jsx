@@ -23,7 +23,7 @@ export const CartProvider = ({ children }) => {
 
   const loadCart = () => {
     setLoading(true);
-    const savedCart = localStorage.getItem("sjs_cart");
+    const savedCart = sessionStorage.getItem("sjs_cart");
     if (savedCart) {
       try {
         const cart = JSON.parse(savedCart);
@@ -56,8 +56,8 @@ export const CartProvider = ({ children }) => {
     setCartTotal(total);
     setCartCount(items.length);
     
-    // Save to localStorage
-    localStorage.setItem("sjs_cart", JSON.stringify(items));
+    // Save to sessionStorage
+    sessionStorage.setItem("sjs_cart", JSON.stringify(items));
   };
 
   const updateCartStats = (items) => {
@@ -66,7 +66,7 @@ export const CartProvider = ({ children }) => {
 
   // Updated addToCart to handle object parameter (for CourseDetail) and individual params (for Courses page)
   const addToCart = (courseId, courseName, coursePrice, courseDuration, quantity = 1) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       toast.error("Please login to add items to cart");
       window.location.href = "/login";

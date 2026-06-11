@@ -15,10 +15,10 @@ const ProtectedRoute = ({ children, allowedUserType, allowedRoles = [] }) => {
   // Check tab-specific session
   const tabToken = sessionStorage.getItem('tabToken');
   const tabUserType = sessionStorage.getItem('tabUserType');
-  const token = localStorage.getItem('token');
-  const userType = localStorage.getItem('userType');
-  const userData = localStorage.getItem('user');
-  const currentTabId = localStorage.getItem('currentTabId');
+  const token = sessionStorage.getItem('token');
+  const userType = sessionStorage.getItem('userType');
+  const userData = sessionStorage.getItem('user');
+  const currentTabId = sessionStorage.getItem('currentTabId');
   const sessionTabId = sessionStorage.getItem('tabId');
   
   console.log("ProtectedRoute - Checking auth:", { 

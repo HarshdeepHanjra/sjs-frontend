@@ -287,7 +287,7 @@ const Login = () => {
   const [timer, setTimer] = useState(0);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token && isAuthenticated) {
       console.log("User already logged in:", user?.name);
     }
