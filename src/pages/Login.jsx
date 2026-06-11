@@ -238,13 +238,7 @@ const Login = () => {
                 {loading ? 'Logging in...' : 'Login →'}
               </button>
 
-              <button
-                type="button"
-                onClick={fillDemoCredentials}
-                className="w-full text-sm text-gray-500 hover:text-primary-600 transition"
-              >
-                Use Demo Credentials
-              </button>
+              
             </form>
 
             {userType === 'student' && (
