@@ -356,7 +356,7 @@ const Login = () => {
       if (userType === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/home');
+        navigate('/dashboard');
       }
     }
   };
