@@ -264,29 +264,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaEnvelope, FaLock, FaUserGraduate, FaUserTie, FaPhone, FaKey, FaArrowLeft } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaUserGraduate, FaUserTie, FaPhone, FaKey } from 'react-icons/fa';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/UserContext';
-
-const YOUR_ADMIN_PHONE = "+91850026639"; // Admin's phone number
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuth();
   const [userType, setUserType] = useState('student');
-  const [step, setStep] = useState('credentials'); // 'credentials', 'verify'
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    phone: '',
-    code: ''
+    password: ''
   });
   const [loading, setLoading] = useState(false);
-  const [resendTimer, setResendTimer] = useState(0);
-  const [tempToken, setTempToken] = useState(null);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpSending, setOtpSending] = useState(false);
+  const [pendingLoginData, setPendingLoginData] = useState(null);
+  const [studentId, setStudentId] = useState(null);
+  const [adminId, setAdminId] = useState(null);
+  const [timer, setTimer] = useState(0);
 
-  // If already logged in, stay on home page
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token && isAuthenticated) {
@@ -294,91 +293,55 @@ const Login = () => {
     }
   }, [isAuthenticated, user]);
 
-  // Resend timer countdown
   useEffect(() => {
     let interval;
-    if (resendTimer > 0) {
+    if (timer > 0) {
       interval = setInterval(() => {
-        setResendTimer(prev => prev - 1);
+        setTimer(prev => prev - 1);
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [resendTimer]);
+  }, [timer]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const sendVerificationCode = async (phone, type) => {
-    try {
-      const response = await api.post('/auth/send-verification-code', {
-        phone: phone,
-        user_type: type
-      });
-      
-      if (response.data.success) {
-        toast.success(`Verification code sent to ${phone}`);
-        setResendTimer(60);
-        setTempToken(response.data.temp_token);
-        return true;
-      } else {
-        toast.error(response.data.error || 'Failed to send code');
-        return false;
-      }
-    } catch (error) {
-      console.error('Send code error:', error);
-      toast.error(error.response?.data?.error || 'Failed to send verification code');
-      return false;
-    }
-  };
-
-  const verifyCode = async (phone, code, tempToken) => {
-    try {
-      const response = await api.post('/auth/verify-code', {
-        phone: phone,
-        code: code,
-        temp_token: tempToken
-      });
-      
-      return response.data.success;
-    } catch (error) {
-      console.error('Verify code error:', error);
-      toast.error(error.response?.data?.error || 'Invalid verification code');
-      return false;
-    }
-  };
-
   const handleStudentLogin = async () => {
     try {
-      // First, authenticate with email and password
       const response = await api.post('/auth/student/login', {
         email: formData.email,
         password: formData.password
       });
       
+      console.log("Student login response:", response.data);
+      
+      if (response.data.requires_otp) {
+        setStudentId(response.data.student_id);
+        setShowOtpModal(true);
+        setTimer(60);
+        toast.success(response.data.message);
+        return;
+      }
+      
       if (response.data.access_token) {
-        // Get student's phone number from the response
-        const studentPhone = response.data.student?.phone;
+        const studentData = {
+          ...response.data.student,
+          userType: 'student',
+          role: 'student'
+        };
         
-        if (!studentPhone) {
-          toast.error('No phone number registered. Please contact support.');
-          return false;
-        }
+        login(response.data.access_token, studentData, 'student');
+        toast.success(`Welcome back, ${response.data.student.name}!`);
         
-        // Store temp data
-        setTempToken(response.data.access_token);
-        setFormData(prev => ({ ...prev, phone: studentPhone }));
-        
-        // Send verification code
-        const codeSent = await sendVerificationCode(studentPhone, 'student');
-        
-        if (codeSent) {
-          toast.success(`Verification code sent to ${studentPhone}`);
-          setStep('verify');
-          return true;
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('returnUrl');
+        if (returnUrl) {
+          navigate(decodeURIComponent(returnUrl));
+        } else {
+          navigate('/dashboard');
         }
       }
-      return false;
     } catch (error) {
       console.error('Student login error:', error);
       if (error.response?.status === 401) {
@@ -386,128 +349,144 @@ const Login = () => {
       } else {
         toast.error('Login failed. Please try again.');
       }
-      return false;
     }
   };
 
   const handleAdminLogin = async () => {
     try {
-      // Admin login - just verify with phone and code
-      const adminPhone = formData.phone;
+      const response = await api.post('/auth/admin/login', {
+        email: formData.email,
+        password: formData.password
+      });
       
-      if (!adminPhone) {
-        toast.error('Please enter phone number');
-        return false;
+      console.log("Admin login response:", response.data);
+      
+      if (response.data.requires_otp) {
+        setAdminId(response.data.admin_id);
+        setShowOtpModal(true);
+        setTimer(60);
+        toast.success(response.data.message);
+        return;
       }
       
-      // Send verification code
-      const codeSent = await sendVerificationCode(adminPhone, 'admin');
-      
-      if (codeSent) {
-        setStep('verify');
-        return true;
+      if (response.data.access_token) {
+        const adminData = {
+          ...response.data.admin,
+          userType: 'admin',
+          role: 'admin'
+        };
+        
+        login(response.data.access_token, adminData, 'admin');
+        toast.success(`Welcome, ${response.data.admin.full_name || 'Admin'}!`);
+        navigate('/admin');
       }
-      return false;
     } catch (error) {
       console.error('Admin login error:', error);
-      toast.error('Failed to send verification code');
-      return false;
+      if (error.response?.status === 401) {
+        toast.error('Invalid credentials');
+      } else {
+        toast.error('Login failed. Please try again.');
+      }
     }
   };
 
-  const handleVerifyAndLogin = async () => {
-    if (!formData.code || formData.code.length !== 6) {
-      toast.error('Please enter 6-digit verification code');
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.length !== 6) {
+      toast.error('Please enter 6-digit OTP');
       return;
     }
 
-    setLoading(true);
-    
+    setOtpSending(true);
     try {
-      const isVerified = await verifyCode(formData.phone, formData.code, tempToken);
-      
-      if (isVerified) {
+      let response;
+      if (userType === 'student') {
+        response = await api.post('/auth/verify-otp', {
+          student_id: studentId,
+          otp: otp
+        });
+      } else {
+        response = await api.post('/auth/verify-otp', {
+          admin_id: adminId,
+          otp: otp
+        });
+      }
+
+      if (response.data.verified) {
+        toast.success('OTP verified successfully!');
+        setShowOtpModal(false);
+        setOtp('');
+        
+        // Complete login after OTP verification
         if (userType === 'student') {
-          // Complete student login
-          const response = await api.post('/auth/student/login', {
+          const loginResponse = await api.post('/auth/student/login', {
             email: formData.email,
-            password: formData.password
+            password: formData.password,
+            is_otp_verified: true,
+            otp: otp
           });
           
-          if (response.data.access_token) {
+          if (loginResponse.data.access_token) {
             const studentData = {
-              ...response.data.student,
+              ...loginResponse.data.student,
               userType: 'student',
               role: 'student'
             };
-            
-            login(response.data.access_token, studentData, 'student');
-            toast.success(`Welcome back, ${response.data.student.name}!`);
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const returnUrl = urlParams.get('returnUrl');
-            if (returnUrl) {
-              navigate(decodeURIComponent(returnUrl));
-            } else {
-              navigate('/dashboard');
-            }
+            login(loginResponse.data.access_token, studentData, 'student');
+            toast.success(`Welcome back, ${loginResponse.data.student.name}!`);
+            navigate('/dashboard');
           }
         } else {
-          // Complete admin login
-          const adminData = {
-            id: 1,
-            name: 'Admin',
-            email: 'admin@sjsacademy.com',
-            phone: formData.phone,
-            userType: 'admin',
-            role: 'admin'
-          };
+          const loginResponse = await api.post('/auth/admin/login', {
+            email: formData.email,
+            password: formData.password,
+            is_otp_verified: true,
+            otp: otp
+          });
           
-          const tempAdminToken = jwt.encode(
-            { id: 1, role: 'admin', email: 'admin@sjsacademy.com', phone: formData.phone },
-            'sjs-academy-secret-key',
-            { expiresIn: '30d' }
-          );
-          
-          login(tempAdminToken, adminData, 'admin');
-          toast.success('Welcome Admin!');
-          navigate('/admin');
+          if (loginResponse.data.access_token) {
+            const adminData = {
+              ...loginResponse.data.admin,
+              userType: 'admin',
+              role: 'admin'
+            };
+            login(loginResponse.data.access_token, adminData, 'admin');
+            toast.success(`Welcome, ${loginResponse.data.admin.full_name || 'Admin'}!`);
+            navigate('/admin');
+          }
         }
       } else {
-        toast.error('Invalid verification code. Please try again.');
+        toast.error(response.data.error || 'Invalid OTP');
       }
     } catch (error) {
-      console.error('Verification error:', error);
-      toast.error('Verification failed. Please try again.');
+      console.error('OTP verification error:', error);
+      toast.error('Failed to verify OTP');
     } finally {
-      setLoading(false);
+      setOtpSending(false);
     }
   };
 
-  const handleResendCode = async () => {
-    if (resendTimer > 0) return;
-    
-    await sendVerificationCode(formData.phone, userType);
+  const handleResendOtp = async () => {
+    setTimer(60);
+    if (userType === 'student') {
+      await api.post('/auth/student/login', {
+        email: formData.email,
+        password: formData.password
+      });
+    } else {
+      await api.post('/auth/admin/login', {
+        email: formData.email,
+        password: formData.password
+      });
+    }
+    toast.success('OTP resent successfully!');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (step === 'verify') {
-      await handleVerifyAndLogin();
+    if (!formData.email || !formData.password) {
+      toast.error('Please enter email and password');
       return;
-    }
-    
-    if (userType === 'student') {
-      if (!formData.email || !formData.password) {
-        toast.error('Please enter email and password');
-        return;
-      }
-    } else {
-      if (!formData.phone) {
-        toast.error('Please enter phone number');
-        return;
-      }
     }
     
     setLoading(true);
@@ -521,51 +500,37 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleBackToCredentials = () => {
-    setStep('credentials');
-    setFormData(prev => ({ ...prev, code: '' }));
-    setTempToken(null);
-  };
-
   const fillDemoCredentials = () => {
     if (userType === 'student') {
       setFormData({
         email: 'student@example.com',
-        password: 'student123',
-        phone: '',
-        code: ''
+        password: 'student123'
       });
     } else {
       setFormData({
-        email: '',
-        password: '',
-        phone: '+91850026639',
-        code: ''
+        email: 'admin@sjsacademy.com',
+        password: 'Admin@123'
       });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white py-16">
-      <div className="container mx-auto px-4">
-        <div className="max-w-md mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-white rounded-2xl shadow-2xl overflow-hidden"
-          >
-            <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-6 text-white text-center">
-              <h1 className="text-2xl font-bold">Welcome Back</h1>
-              <p className="text-primary-100 mt-2">
-                {step === 'credentials' 
-                  ? 'Login to your account' 
-                  : 'Enter verification code'}
-              </p>
-            </div>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-md mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="bg-white rounded-2xl shadow-2xl overflow-hidden"
+            >
+              <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-6 text-white text-center">
+                <h1 className="text-2xl font-bold">Welcome Back</h1>
+                <p className="text-primary-100 mt-2">Login to your account</p>
+              </div>
 
-            {/* User Type Toggle (only show on credentials step) */}
-            {step === 'credentials' && (
+              {/* User Type Toggle */}
               <div className="flex border-b">
                 <button
                   type="button"
@@ -592,165 +557,145 @@ const Login = () => {
                   Admin
                 </button>
               </div>
-            )}
 
-            {/* Back Button for verification step */}
-            {step === 'verify' && (
-              <button
-                onClick={handleBackToCredentials}
-                className="flex items-center gap-2 text-primary-600 px-4 pt-4 hover:text-primary-700 transition"
-              >
-                <FaArrowLeft /> Back
-              </button>
-            )}
-
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              {step === 'credentials' && (
-                <>
-                  {userType === 'student' ? (
-                    <>
-                      <div>
-                        <label className="block text-gray-700 font-semibold mb-2">
-                          <FaEnvelope className="inline mr-2" />
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          required
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                          placeholder="Enter your email"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-gray-700 font-semibold mb-2">
-                          <FaLock className="inline mr-2" />
-                          Password
-                        </label>
-                        <input
-                          type="password"
-                          name="password"
-                          value={formData.password}
-                          onChange={handleChange}
-                          required
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                          placeholder="Enter your password"
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <div>
-                      <label className="block text-gray-700 font-semibold mb-2">
-                        <FaPhone className="inline mr-2" />
-                        Phone Number
-                      </label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                        placeholder="Enter your phone number"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        We'll send a verification code to this number
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {step === 'verify' && (
+              {/* Login Form */}
+              <form onSubmit={handleSubmit} className="p-8 space-y-6">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">
-                    <FaKey className="inline mr-2" />
-                    Verification Code
+                    <FaEnvelope className="inline mr-2" />
+                    Email Address
                   </label>
                   <input
-                    type="text"
-                    name="code"
-                    value={formData.code}
+                    type="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
-                    maxLength={6}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition text-center text-2xl tracking-widest"
-                    placeholder="Enter 6-digit code"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                    placeholder="Enter your email"
                   />
-                  <div className="mt-3 text-center">
-                    {resendTimer > 0 ? (
-                      <span className="text-sm text-gray-500">
-                        Resend code in {resendTimer} seconds
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleResendCode}
-                        className="text-sm text-primary-600 hover:text-primary-700 transition"
-                      >
-                        Resend verification code
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
-                    Verification code sent to {formData.phone}
-                  </p>
                 </div>
-              )}
 
-              <div className="flex items-center justify-between">
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  <span className="text-sm text-gray-600">Remember me</span>
-                </label>
-                {step === 'credentials' && (
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    <FaLock className="inline mr-2" />
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                    placeholder="Enter your password"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm text-gray-600">Remember me</span>
+                  </label>
                   <Link to="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">
                     Forgot Password?
                   </Link>
-                )}
-              </div>
+                </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-lg transition duration-300 transform hover:scale-105 disabled:opacity-50"
-              >
-                {loading ? (
-                  'Processing...'
-                ) : step === 'credentials' ? (
-                  userType === 'student' ? 'Login →' : 'Send Verification Code →'
-                ) : (
-                  'Verify & Login →'
-                )}
-              </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-lg transition duration-300 transform hover:scale-105 disabled:opacity-50"
+                >
+                  {loading ? 'Logging in...' : 'Login →'}
+                </button>
 
-              <button
-                type="button"
-                onClick={fillDemoCredentials}
-                className="w-full text-sm text-gray-500 hover:text-primary-600 transition"
-              >
-                Use Demo Credentials
-              </button>
-            </form>
+                <button
+                  type="button"
+                  onClick={fillDemoCredentials}
+                  className="w-full text-sm text-gray-500 hover:text-primary-600 transition"
+                >
+                  Use Demo Credentials
+                </button>
+              </form>
 
-            {step === 'credentials' && userType === 'student' && (
-              <div className="p-6 text-center border-t">
-                <p className="text-gray-600">
-                  Don't have an account?{' '}
-                  <Link to="/register" className="text-primary-600 font-semibold hover:underline">
-                    Register Now
-                  </Link>
-                </p>
-              </div>
-            )}
-          </motion.div>
+              {userType === 'student' && (
+                <div className="p-6 text-center border-t">
+                  <p className="text-gray-600">
+                    Don't have an account?{' '}
+                    <Link to="/register" className="text-primary-600 font-semibold hover:underline">
+                      Register Now
+                    </Link>
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* OTP Modal */}
+      {showOtpModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="p-6">
+              <div className="text-center mb-4">
+                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FaPhone className="text-2xl text-primary-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800">Enter OTP</h3>
+                <p className="text-gray-500 text-sm mt-2">
+                  Please enter the 6-digit OTP sent to your registered mobile number
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  <FaKey className="inline mr-2" />
+                  OTP Code
+                </label>
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  maxLength={6}
+                  className="w-full px-4 py-3 text-center text-2xl tracking-widest border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="000000"
+                />
+              </div>
+
+              <div className="flex justify-between items-center mt-4 mb-6">
+                <button
+                  onClick={handleResendOtp}
+                  disabled={timer > 0}
+                  className="text-sm text-primary-600 hover:text-primary-700 disabled:opacity-50"
+                >
+                  {timer > 0 ? `Resend in ${timer}s` : 'Resend OTP'}
+                </button>
+              </div>
+
+              <button
+                onClick={handleVerifyOtp}
+                disabled={otpSending}
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50"
+              >
+                {otpSending ? 'Verifying...' : 'Verify & Login →'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowOtpModal(false);
+                  setOtp('');
+                }}
+                className="w-full mt-3 text-gray-500 hover:text-gray-700 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
