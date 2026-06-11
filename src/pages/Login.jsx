@@ -306,7 +306,9 @@ const Login = () => {
     }
   };
 
-  const handleStudentLogin = async () => {
+  // Update handleStudentLogin function in Login.jsx
+
+const handleStudentLogin = async () => {
   try {
     setLoading(true);
     const response = await api.post('/api/auth/student/login', {
@@ -323,16 +325,12 @@ const Login = () => {
         role: 'student'
       };
       
+      // Login the user
       login(response.data.access_token, studentData, 'student');
       toast.success(`Welcome back, ${response.data.student.name}!`);
       
-      const urlParams = new URLSearchParams(window.location.search);
-      const returnUrl = urlParams.get('returnUrl');
-      if (returnUrl) {
-        navigate(decodeURIComponent(returnUrl));
-      } else {
-        navigate('/home');
-      }
+      // ✅ Redirect to home page directly (not dashboard)
+      navigate('/home');
     }
   } catch (error) {
     console.error('Student login error:', error);
