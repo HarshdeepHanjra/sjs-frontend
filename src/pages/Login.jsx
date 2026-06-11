@@ -246,6 +246,10 @@
 
 // export default Login;
 
+
+
+
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -340,10 +344,21 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Student login error:', error);
-      if (error.response?.status === 401) {
-        toast.error('Invalid email or password');
-      } else {
-        toast.error('Login failed. Please try again.');
+      console.log('Server Error:', error.response?.data);
+      toast.error(
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        'Login failed'
+      );
+    }
+  };
+
+  const handleLoginSuccess = (userType) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('returnUrl');
+    
+    if (returnUrl) {
+      navigate(decodeURIComponent(returnUrl));
       }
     }
   };
@@ -393,11 +408,13 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Admin login error:', error);
-      if (error.response?.status === 401) {
-        toast.error('Invalid credentials');
-      } else {
-        toast.error('Login failed. Please try again.');
-      }
+      console.log('Server Error:', error.response?.data);
+
+      toast.error(
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        'Login failed'
+      );
     }
   };
 
