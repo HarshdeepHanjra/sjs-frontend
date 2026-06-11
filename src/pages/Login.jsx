@@ -308,6 +308,8 @@ const Login = () => {
 
   // Update handleStudentLogin function in Login.jsx
 
+// Update handleStudentLogin function
+
 const handleStudentLogin = async () => {
   try {
     setLoading(true);
@@ -329,8 +331,8 @@ const handleStudentLogin = async () => {
       login(response.data.access_token, studentData, 'student');
       toast.success(`Welcome back, ${response.data.student.name}!`);
       
-      // ✅ Redirect to home page directly (not dashboard)
-      navigate('/home');
+      // ✅ Redirect to DASHBOARD (not home page)
+      navigate('/dashboard');
     }
   } catch (error) {
     console.error('Student login error:', error);
