@@ -359,16 +359,6 @@ const Login = () => {
     
     if (returnUrl) {
       navigate(decodeURIComponent(returnUrl));
-      }
-    }
-  };
-
-  const handleLoginSuccess = (userType) => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const returnUrl = urlParams.get('returnUrl');
-    
-    if (returnUrl) {
-      navigate(decodeURIComponent(returnUrl));
     } else {
       if (userType === 'admin') {
         navigate('/admin');
