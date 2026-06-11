@@ -284,6 +284,8 @@
 
 
 
+
+
 import React, { createContext, useState, useContext, useEffect } from "react";
 import api from "../services/api";
 import toast from "react-hot-toast";
@@ -300,11 +302,33 @@ export const useAuth = () => {
 
 export const useUser = useAuth;
 
+// Persistent storage helper
+const persistentStorage = {
+  get: (key) => {
+    return localStorage.getItem(key) || sessionStorage.getItem(key);
+  },
+  set: (key, value) => {
+    localStorage.setItem(key, value);
+    sessionStorage.setItem(key, value);
+  },
+  remove: (key) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  },
+  clear: () => {
+    const keys = ['token', 'user', 'userData', 'userType', 'currentTabId', 'tabToken', 'tabUserType'];
+    keys.forEach(key => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    });
+  }
+};
+
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userType, setUserType] = useState(null); // Add userType state
+  const [userType, setUserType] = useState(null);
 
   // Generate unique tab ID for this browser tab
   const getTabId = () => {
@@ -323,17 +347,14 @@ export const UserProvider = ({ children }) => {
     const handlePaymentApproved = async (event) => {
       console.log("Payment approved event received:", event.detail);
 
-      // Refresh user data to show new courses
-      const token = sessionStorage.getItem("token");
+      const token = persistentStorage.get("token");
       if (token) {
         try {
-          // ✅ Use verify-token endpoint instead of /user/profile
           const response = await api.get("/api/auth/verify-token");
           if (response.data.valid) {
             const verifiedUser = response.data.user;
             const currentUser = user;
 
-            // Merge updated user data
             const mergedUser = {
               ...currentUser,
               ...verifiedUser,
@@ -341,7 +362,7 @@ export const UserProvider = ({ children }) => {
             };
 
             setUser(mergedUser);
-            sessionStorage.setItem("user", JSON.stringify(mergedUser));
+            persistentStorage.set("user", JSON.stringify(mergedUser));
 
             console.log("User data refreshed after payment approval");
             toast.success("Your courses have been updated!");
@@ -377,7 +398,7 @@ export const UserProvider = ({ children }) => {
 
       if (e.key === "token" && e.newValue !== e.oldValue) {
         if (!e.newValue && e.oldValue) {
-          const currentToken = sessionStorage.getItem("token");
+          const currentToken = persistentStorage.get("token");
           if (currentToken !== e.oldValue) {
             console.log("Token removed in another tab, clearing session");
             clearAuth();
@@ -387,15 +408,13 @@ export const UserProvider = ({ children }) => {
     };
 
     window.addEventListener("storage", handleStorageChange);
-
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const restoreSession = async () => {
-    const token = sessionStorage.getItem("token");
-    // Try both 'user' and 'userData' for backward compatibility
-    const userData = sessionStorage.getItem("user") || sessionStorage.getItem("userData");
-    const storedUserType = sessionStorage.getItem("userType");
+    const token = persistentStorage.get("token");
+    const userData = persistentStorage.get("user") || persistentStorage.get("userData");
+    const storedUserType = persistentStorage.get("userType");
 
     console.log("Restoring session:", {
       tokenExists: !!token,
@@ -414,7 +433,7 @@ export const UserProvider = ({ children }) => {
           let parsedUser;
 
           try {
-            parsedUser = JSON.parse(userData);
+            parsedUser = typeof userData === 'string' ? JSON.parse(userData) : userData;
           } catch (e) {
             parsedUser = userData;
           }
@@ -432,14 +451,14 @@ export const UserProvider = ({ children }) => {
 
           if (finalUser.role === storedUserType) {
             setUser(finalUser);
-            setUserType(finalUser.role); // Set userType state
+            setUserType(finalUser.role);
             setIsAuthenticated(true);
             sessionStorage.setItem("tabToken", token);
             sessionStorage.setItem("tabUserType", finalUser.role);
             sessionStorage.setItem("currentTabId", tabId);
             // Ensure user data is stored consistently
-            sessionStorage.setItem("user", JSON.stringify(finalUser));
-            sessionStorage.setItem("userType", finalUser.role);
+            persistentStorage.set("user", JSON.stringify(finalUser));
+            persistentStorage.set("userType", finalUser.role);
             console.log("Session restored successfully for:", finalUser.name);
           } else {
             console.log("Role mismatch, clearing session");
@@ -454,13 +473,13 @@ export const UserProvider = ({ children }) => {
         if (error.code === "ERR_NETWORK") {
           let parsedUser;
           try {
-            parsedUser = JSON.parse(userData);
+            parsedUser = typeof userData === 'string' ? JSON.parse(userData) : userData;
           } catch (e) {
             parsedUser = { name: "User", email: "" };
           }
           const finalUser = { ...parsedUser, role: storedUserType, userType: storedUserType };
           setUser(finalUser);
-          setUserType(storedUserType); // Set userType state
+          setUserType(storedUserType);
           setIsAuthenticated(true);
         } else if (error.response?.status === 401) {
           clearAuth();
@@ -471,33 +490,22 @@ export const UserProvider = ({ children }) => {
   };
 
   const clearAuth = () => {
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("userData");
-    sessionStorage.removeItem("userType");
-    sessionStorage.removeItem("currentTabId");
-
-    sessionStorage.removeItem("tabToken");
-    sessionStorage.removeItem("tabUserType");
-
+    persistentStorage.clear();
     delete api.defaults.headers.common["Authorization"];
-
     setUser(null);
-    setUserType(null); // Clear userType state
+    setUserType(null);
     setIsAuthenticated(false);
   };
 
   const login = (token, userData, userTypeValue) => {
     console.log("Login - Setting user data:", { userData, userTypeValue, tabId });
 
-    clearAuth();
-
-    // Store consistently using 'user' key
-    sessionStorage.setItem("token", token);
-    sessionStorage.setItem("user", JSON.stringify(userData));
-    sessionStorage.setItem("userType", userTypeValue);
-    sessionStorage.setItem("currentTabId", tabId);
-
+    // Store in persistent storage
+    persistentStorage.set("token", token);
+    persistentStorage.set("user", JSON.stringify(userData));
+    persistentStorage.set("userType", userTypeValue);
+    persistentStorage.set("currentTabId", tabId);
+    
     sessionStorage.setItem("tabToken", token);
     sessionStorage.setItem("tabUserType", userTypeValue);
 
@@ -509,7 +517,7 @@ export const UserProvider = ({ children }) => {
       userType: userTypeValue,
     };
     setUser(userWithRole);
-    setUserType(userTypeValue); // Set userType state
+    setUserType(userTypeValue);
     setIsAuthenticated(true);
 
     console.log("Login successful for tab:", tabId);
@@ -534,7 +542,7 @@ export const UserProvider = ({ children }) => {
     if (user) {
       const newUser = { ...user, ...updatedData };
       setUser(newUser);
-      sessionStorage.setItem('user', JSON.stringify(newUser));
+      persistentStorage.set("user", JSON.stringify(newUser));
     }
   };
 
@@ -550,9 +558,9 @@ export const UserProvider = ({ children }) => {
           userType: verifiedUser.role,
         };
         setUser(updatedUser);
-        setUserType(verifiedUser.role); // Update userType state
-        sessionStorage.setItem("user", JSON.stringify(updatedUser));
-        sessionStorage.setItem("userType", verifiedUser.role);
+        setUserType(verifiedUser.role);
+        persistentStorage.set("user", JSON.stringify(updatedUser));
+        persistentStorage.set("userType", verifiedUser.role);
         sessionStorage.setItem("tabUserType", verifiedUser.role);
         return updatedUser;
       }
