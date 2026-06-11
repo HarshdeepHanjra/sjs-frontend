@@ -307,51 +307,44 @@ const Login = () => {
   };
 
   const handleStudentLogin = async () => {
-    try {
-      const response = await api.post('/api/auth/student/login', {
-        email: formData.email,
-        password: formData.password
-      });
+  try {
+    setLoading(true);
+    const response = await api.post('/api/auth/student/login', {
+      email: formData.email,
+      password: formData.password
+    });
+    
+    console.log('Student login response:', response.data);
+    
+    if (response.data.access_token) {
+      const studentData = {
+        ...response.data.student,
+        userType: 'student',
+        role: 'student'
+      };
       
-      // Check if OTP is required
-      if (response.data.requires_otp) {
-        setSessionId(response.data.session_id);
-        setShowOtpModal(true);
-        setTimer(60);
-        toast.success(response.data.message);
-        return;
-      }
+      login(response.data.access_token, studentData, 'student');
+      toast.success(`Welcome back, ${response.data.student.name}!`);
       
-      if (response.data.access_token) {
-        // Make sure student data includes userType
-        const studentData = {
-          ...response.data.student,
-          userType: 'student',
-          role: 'student'
-        };
-        
-        login(response.data.access_token, studentData, 'student');
-        toast.success(`Welcome back, ${response.data.student.name}!`);
-        
-        // Check for return URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const returnUrl = urlParams.get('returnUrl');
-        if (returnUrl) {
-          navigate(decodeURIComponent(returnUrl));
-        } else {
-          navigate('/home');
-        }
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnUrl = urlParams.get('returnUrl');
+      if (returnUrl) {
+        navigate(decodeURIComponent(returnUrl));
+      } else {
+        navigate('/home');
       }
-    } catch (error) {
-      console.error('Student login error:', error);
-      console.log('Server Error:', error.response?.data);
-      toast.error(
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        'Login failed'
-      );
     }
-  };
+  } catch (error) {
+    console.error('Student login error:', error);
+    toast.error(
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      'Login failed'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleLoginSuccess = (userType) => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -369,44 +362,40 @@ const Login = () => {
   };
 
   const handleAdminLogin = async () => {
-    try {
-      const response = await api.post('/api/auth/admin/login', {
-        email: formData.email,
-        password: formData.password
-      });
-      
-      // Check if OTP is required
-      if (response.data.requires_otp) {
-        setSessionId(response.data.session_id);
-        setShowOtpModal(true);
-        setTimer(60);
-        toast.success(response.data.message);
-        return;
-      }
-      
-      if (response.data.access_token) {
-        // Make sure admin data includes userType
-        const adminData = {
-          ...response.data.admin,
-          userType: 'admin',
-          role: 'admin'
-        };
-        
-        login(response.data.access_token, adminData, 'admin');
-        toast.success(`Welcome, ${response.data.admin.full_name || 'Admin'}!`);
-        navigate('/admin');
-      }
-    } catch (error) {
-      console.error('Admin login error:', error);
-      console.log('Server Error:', error.response?.data);
-
-      toast.error(
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        'Login failed'
-      );
+  try {
+    const response = await api.post('/api/auth/admin/login', {
+      email: formData.email,
+      password: formData.password
+    });
+    
+    if (response.data.requires_otp) {
+      setSessionId(response.data.session_id);
+      setShowOtpModal(true);
+      setTimer(60);
+      toast.success(response.data.message);
+      return;
     }
-  };
+    
+    if (response.data.access_token) {
+      const adminData = {
+        ...response.data.admin,
+        userType: 'admin',
+        role: 'admin'
+      };
+      
+      login(response.data.access_token, adminData, 'admin');
+      toast.success(`Welcome, ${response.data.admin.full_name || 'Admin'}!`);
+      navigate('/admin');
+    }
+  } catch (error) {
+    console.error('Admin login error:', error);
+    toast.error(
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      'Login failed'
+    );
+  }
+};
 
   // New function for OTP verification
   // Update your handleVerifyOtp function
