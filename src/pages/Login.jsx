@@ -309,7 +309,7 @@ const Login = () => {
 
   const handleStudentLogin = async () => {
     try {
-      const response = await api.post('/auth/student/login', {
+      const response = await api.post('/api/auth/student/login', {
         email: formData.email,
         password: formData.password
       });
@@ -354,7 +354,7 @@ const Login = () => {
 
   const handleAdminLogin = async () => {
     try {
-      const response = await api.post('/auth/admin/login', {
+      const response = await api.post('/api/auth/admin/login', {
         email: formData.email,
         password: formData.password
       });
@@ -400,12 +400,12 @@ const Login = () => {
     try {
       let response;
       if (userType === 'student') {
-        response = await api.post('/auth/verify-otp', {
+        response = await api.post('/api/auth/verify-otp', {
           student_id: studentId,
           otp: otp
         });
       } else {
-        response = await api.post('/auth/verify-otp', {
+        response = await api.post('/api/auth/verify-otp', {
           admin_id: adminId,
           otp: otp
         });
@@ -418,7 +418,7 @@ const Login = () => {
         
         // Complete login after OTP verification
         if (userType === 'student') {
-          const loginResponse = await api.post('/auth/student/login', {
+          const loginResponse = await api.post('/api/auth/student/login', {
             email: formData.email,
             password: formData.password,
             is_otp_verified: true,
@@ -436,7 +436,7 @@ const Login = () => {
             navigate('/dashboard');
           }
         } else {
-          const loginResponse = await api.post('/auth/admin/login', {
+          const loginResponse = await api.post('/api/auth/admin/login', {
             email: formData.email,
             password: formData.password,
             is_otp_verified: true,
@@ -468,12 +468,12 @@ const Login = () => {
   const handleResendOtp = async () => {
     setTimer(60);
     if (userType === 'student') {
-      await api.post('/auth/student/login', {
+      await api.post('/api/auth/student/login', {
         email: formData.email,
         password: formData.password
       });
     } else {
-      await api.post('/auth/admin/login', {
+      await api.post('/api/auth/admin/login', {
         email: formData.email,
         password: formData.password
       });
