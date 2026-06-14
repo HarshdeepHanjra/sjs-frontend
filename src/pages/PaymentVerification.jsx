@@ -1141,15 +1141,15 @@ const PaymentVerification = () => {
                   </div>
                 </div>
 
-                Bank Transfer Option
-                <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'bank_transfer' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('bank_transfer')}>
-                  <div className="flex flex-col items-center text-center gap-1">
-                    <FaUniversity className="text-orange-600 text-2xl" />
-                    <p className="font-semibold text-xs">Bank Transfer</p>
-                    <p className="text-xs text-gray-500">Manual</p>
-                    {selectedMethod === 'bank_transfer' && <FaCheckCircle className="text-primary-600 text-xs" />}
-                  </div>
-                </div>
+                {/* Bank Transfer Option */}
+                {/* <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'bank_transfer' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('bank_transfer')}> */}
+                  {/* <div className="flex flex-col items-center text-center gap-1"> */}
+                    {/* <FaUniversity className="text-orange-600 text-2xl" /> */}
+                    {/* <p className="font-semibold text-xs">Bank Transfer<//p> */}
+                    {/* <p className="text-xs text-gray-500">Manual</p> */}
+                    {/* {selectedMethod === 'bank_transfer' && <FaCheckCircle className="text-primary-600 text-xs" />} */}
+                  {/* </div> */}
+                {/* </div> */}
               </div>
             </div>
 
