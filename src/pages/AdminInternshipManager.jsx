@@ -18,7 +18,6 @@ const AdminInternshipManager = () => {
     original_fee: 0,
     stipend: "",
     mode: "Online",
-    start_date: "",
     slots: 0,
     enrolled: 0,
     rating: 4.5,
@@ -135,7 +134,6 @@ const AdminInternshipManager = () => {
       original_fee: internship.original_fee,
       stipend: internship.stipend,
       mode: internship.mode,
-      start_date: internship.start_date,
       slots: internship.slots,
       enrolled: internship.enrolled,
       rating: internship.rating,
@@ -375,18 +373,6 @@ const AdminInternshipManager = () => {
                     value={formData.stipend}
                     onChange={handleInputChange}
                     placeholder="e.g., Unpaid, Performance Based"
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Start Date</label>
-                  <input
-                    type="text"
-                    name="start_date"
-                    value={formData.start_date}
-                    onChange={handleInputChange}
-                    placeholder="e.g., Monthly Batch"
                     className="w-full px-3 py-2 border rounded-lg"
                   />
                 </div>
