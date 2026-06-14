@@ -41,7 +41,7 @@
 //   const [submitting, setSubmitting] = useState(false);
 //   const navigate = useNavigate();
 
-//   // ✅ Fetch internships from backend
+//   // Fetch internships from backend
 //   const fetchInternships = async () => {
 //     setLoading(true);
 //     try {
@@ -49,13 +49,11 @@
 //       if (response.data.success) {
 //         setInternships(response.data.internships);
 //       } else {
-//         // Fallback data if API fails
 //         setInternships(getFallbackInternships());
 //       }
 //     } catch (error) {
 //       console.error('Failed to fetch internships:', error);
 //       toast.error('Failed to load internships');
-//       // Use fallback data
 //       setInternships(getFallbackInternships());
 //     } finally {
 //       setLoading(false);
@@ -191,6 +189,7 @@
 //     { number: "4.9", label: "Student Rating", icon: FaStar },
 //   ];
 
+//   // ✅ FIXED: handleApply - Redirect to payment for paid internships
 //   const handleApply = (internship) => {
 //     // Check if user is logged in
 //     const token = localStorage.getItem('token');
@@ -200,15 +199,33 @@
 //       return;
 //     }
     
-//     setSelectedInternship(internship);
-//     setApplicationForm({
-//       ...applicationForm,
-//       internshipType: internship.title,
-//     });
-//     setShowApplyModal(true);
+//     // Convert fee to number
+//     const feeAmount = parseFloat(internship.fee);
+    
+//     // Check if internship is FREE or PAID
+//     if (feeAmount === 0) {
+//       // FREE internship - Show application form modal
+//       console.log("Free internship - showing application form");
+//       setSelectedInternship(internship);
+//       setApplicationForm({
+//         name: "",
+//         email: "",
+//         phone: "",
+//         qualification: "",
+//         internshipType: internship.title,
+//         message: "",
+//       });
+//       setShowApplyModal(true);
+//     } else {
+//       // PAID internship - Redirect to payment page
+//       console.log("Paid internship - redirecting to payment page, fee:", feeAmount);
+//       navigate(`/internship-payment/${internship.id}`, { 
+//         state: { internship: { ...internship, fee: feeAmount } }
+//       });
+//     }
 //   };
 
-//   // ✅ Submit application to backend
+//   // Submit application for FREE internships
 //   const handleApplicationSubmit = async (e) => {
 //     e.preventDefault();
     
@@ -289,9 +306,7 @@
 //             </p>
 //             <div className="flex flex-wrap gap-4 justify-center">
 //               <div className="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-2">
-//                 <span className="font-semibold">
-//                   🎓 Free Internships Available
-//                 </span>
+//                 <span className="font-semibold">🎓 Free Internships Available</span>
 //               </div>
 //               <div className="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-2">
 //                 <span className="font-semibold">💰 Paid Opportunities</span>
@@ -303,15 +318,8 @@
 //           </motion.div>
 //         </div>
 //         <div className="absolute bottom-0 left-0 right-0">
-//           <svg
-//             viewBox="0 0 1440 120"
-//             fill="none"
-//             xmlns="http://www.w3.org/2000/svg"
-//           >
-//             <path
-//               d="M0 120L60 110C120 100 240 80 360 75C480 70 600 80 720 85C840 90 960 90 1080 85C1200 80 1320 70 1380 65L1440 60V120H0Z"
-//               fill="white"
-//             />
+//           <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+//             <path d="M0 120L60 110C120 100 240 80 360 75C480 70 600 80 720 85C840 90 960 90 1080 85C1200 80 1320 70 1380 65L1440 60V120H0Z" fill="white"/>
 //           </svg>
 //         </div>
 //       </section>
@@ -331,9 +339,7 @@
 //                 <div className="inline-block p-4 bg-primary-100 rounded-full mb-4">
 //                   <stat.icon className="text-3xl text-primary-600" />
 //                 </div>
-//                 <h3 className="text-3xl font-bold text-gray-800">
-//                   {stat.number}
-//                 </h3>
+//                 <h3 className="text-3xl font-bold text-gray-800">{stat.number}</h3>
 //                 <p className="text-gray-600">{stat.label}</p>
 //               </motion.div>
 //             ))}
@@ -349,8 +355,7 @@
 //               Available <span className="text-primary-600">Internships</span>
 //             </h2>
 //             <p className="text-gray-600 max-w-2xl mx-auto">
-//               Choose from our diverse range of internship programs. Free and
-//               paid options available.
+//               Choose from our diverse range of internship programs. Free and paid options available.
 //             </p>
 //           </div>
 
@@ -382,25 +387,23 @@
 //                         💰 PAID
 //                       </div>
 //                     )}
+//                   </div>
 
-//                     {/* Header */}
-//                     <div className="bg-gradient-to-r from-primary-500 to-primary-700 p-6 text-white">
-//                       <FaLaptopCode className="text-4xl mb-3" />
-//                       <h3 className="text-xl font-bold">{internship.title}</h3>
-//                       <div className="flex items-center mt-2">
-//                         <FaStar className="text-yellow-400 mr-1" />
-//                         <span>{internship.rating}</span>
-//                         <span className="mx-2">•</span>
-//                         <span className="text-sm">{internship.mode}</span>
-//                       </div>
+//                   {/* Header */}
+//                   <div className="bg-gradient-to-r from-primary-500 to-primary-700 p-6 text-white">
+//                     <FaLaptopCode className="text-4xl mb-3" />
+//                     <h3 className="text-xl font-bold">{internship.title}</h3>
+//                     <div className="flex items-center mt-2">
+//                       <FaStar className="text-yellow-400 mr-1" />
+//                       <span>{internship.rating}</span>
+//                       <span className="mx-2">•</span>
+//                       <span className="text-sm">{internship.mode}</span>
 //                     </div>
 //                   </div>
 
 //                   {/* Body */}
 //                   <div className="p-6">
-//                     <p className="text-gray-600 mb-4 line-clamp-2">
-//                       {internship.description}
-//                     </p>
+//                     <p className="text-gray-600 mb-4 line-clamp-2">{internship.description}</p>
 
 //                     {/* Details */}
 //                     <div className="space-y-2 mb-4">
@@ -414,19 +417,14 @@
 //                           <span>{internship.startDate}</span>
 //                         </div>
 //                       </div>
-
 //                       <div className="flex items-center justify-between">
 //                         <div className="flex items-center gap-2">
 //                           <FaUsers className="text-gray-400" />
-//                           <span className="text-sm">
-//                             {internship.slots} slots
-//                           </span>
+//                           <span className="text-sm">{internship.slots} slots</span>
 //                         </div>
 //                         <div className="flex items-center gap-2">
 //                           <FaUserGraduate className="text-gray-400" />
-//                           <span className="text-sm">
-//                             {internship.enrolled} enrolled
-//                           </span>
+//                           <span className="text-sm">{internship.enrolled} enrolled</span>
 //                         </div>
 //                       </div>
 //                     </div>
@@ -435,24 +433,14 @@
 //                     <div className="mb-4">
 //                       {internship.fee === 0 ? (
 //                         <div className="text-center">
-//                           <span className="text-2xl font-bold text-green-600">
-//                             FREE
-//                           </span>
-//                           <span className="text-gray-400 line-through ml-2">
-//                             ₹{internship.originalFee}
-//                           </span>
+//                           <span className="text-2xl font-bold text-green-600">FREE</span>
+//                           <span className="text-gray-400 line-through ml-2">₹{internship.originalFee}</span>
 //                         </div>
 //                       ) : (
 //                         <div className="text-center">
-//                           <span className="text-2xl font-bold text-primary-600">
-//                             ₹{internship.fee}
-//                           </span>
-//                           <span className="text-gray-400 line-through ml-2">
-//                             ₹{internship.originalFee}
-//                           </span>
-//                           <p className="text-xs text-gray-500 mt-1">
-//                             {internship.stipend}
-//                           </p>
+//                           <span className="text-2xl font-bold text-primary-600">₹{internship.fee}</span>
+//                           <span className="text-gray-400 line-through ml-2">₹{internship.originalFee}</span>
+//                           <p className="text-xs text-gray-500 mt-1">{internship.stipend}</p>
 //                         </div>
 //                       )}
 //                     </div>
@@ -475,7 +463,7 @@
 //                         onClick={() => handleApply(internship)}
 //                         className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-lg transition"
 //                       >
-//                         Apply Now →
+//                         {internship.fee === 0 ? "Apply Now →" : "Pay Now →"}
 //                       </button>
 //                       <Link to={`/internship/${internship.id}`}>
 //                         <button className="px-4 py-2 border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition">
@@ -496,12 +484,10 @@
 //         <div className="container mx-auto px-4">
 //           <div className="text-center mb-12">
 //             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-//               Why Choose Our{" "}
-//               <span className="text-primary-600">Internship Program</span>
+//               Why Choose Our <span className="text-primary-600">Internship Program</span>
 //             </h2>
 //             <p className="text-gray-600 max-w-2xl mx-auto">
-//               We provide comprehensive support to help you succeed in your
-//               career
+//               We provide comprehensive support to help you succeed in your career
 //             </p>
 //           </div>
 
@@ -511,42 +497,34 @@
 //                 <FaChalkboardTeacher className="text-3xl text-blue-600" />
 //               </div>
 //               <h3 className="font-bold text-lg mb-2">Expert Mentors</h3>
-//               <p className="text-gray-600 text-sm">
-//                 Learn from industry professionals
-//               </p>
+//               <p className="text-gray-600 text-sm">Learn from industry professionals</p>
 //             </div>
 //             <div className="text-center p-6">
 //               <div className="inline-block p-4 bg-green-100 rounded-full mb-4">
 //                 <FaProjectDiagram className="text-3xl text-green-600" />
 //               </div>
 //               <h3 className="font-bold text-lg mb-2">Live Projects</h3>
-//               <p className="text-gray-600 text-sm">
-//                 Work on real-world projects
-//               </p>
+//               <p className="text-gray-600 text-sm">Work on real-world projects</p>
 //             </div>
 //             <div className="text-center p-6">
 //               <div className="inline-block p-4 bg-orange-100 rounded-full mb-4">
 //                 <FaCertificate className="text-3xl text-orange-600" />
 //               </div>
 //               <h3 className="font-bold text-lg mb-2">Certification</h3>
-//               <p className="text-gray-600 text-sm">
-//                 Industry-recognized certificate
-//               </p>
+//               <p className="text-gray-600 text-sm">Industry-recognized certificate</p>
 //             </div>
 //             <div className="text-center p-6">
 //               <div className="inline-block p-4 bg-purple-100 rounded-full mb-4">
 //                 <FaBriefcase className="text-3xl text-purple-600" />
 //               </div>
 //               <h3 className="font-bold text-lg mb-2">Placement Support</h3>
-//               <p className="text-gray-600 text-sm">
-//                 Get hired by top companies
-//               </p>
+//               <p className="text-gray-600 text-sm">Get hired by top companies</p>
 //             </div>
 //           </div>
 //         </div>
 //       </section>
 
-//       {/* Application Modal */}
+//       {/* Application Modal - Only for FREE internships */}
 //       {showApplyModal && selectedInternship && (
 //         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
 //           <motion.div
@@ -555,100 +533,61 @@
 //             className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto"
 //           >
 //             <div className="flex justify-between items-center mb-4">
-//               <h2 className="text-2xl font-bold text-gray-800">
-//                 Apply for Internship
-//               </h2>
-//               <button
-//                 onClick={() => setShowApplyModal(false)}
-//                 className="text-gray-500 hover:text-gray-700"
-//               >
-//                 ✕
-//               </button>
+//               <h2 className="text-2xl font-bold text-gray-800">Apply for Internship</h2>
+//               <button onClick={() => setShowApplyModal(false)} className="text-gray-500 hover:text-gray-700">✕</button>
 //             </div>
 
 //             <div className="bg-primary-50 p-3 rounded-lg mb-4">
-//               <p className="font-semibold text-primary-800">
-//                 {selectedInternship.title}
-//               </p>
+//               <p className="font-semibold text-primary-800">{selectedInternship.title}</p>
 //               <p className="text-sm text-primary-600">
-//                 {selectedInternship.fee === 0
-//                   ? "Free Internship"
-//                   : `Fee: ₹${selectedInternship.fee}`}
+//                 {selectedInternship.fee === 0 ? "Free Internship" : `Fee: ₹${selectedInternship.fee}`}
 //               </p>
 //             </div>
 
 //             <form onSubmit={handleApplicationSubmit} className="space-y-4">
 //               <div>
-//                 <label className="block text-gray-700 font-semibold mb-2">
-//                   Full Name *
-//                 </label>
+//                 <label className="block text-gray-700 font-semibold mb-2">Full Name *</label>
 //                 <input
 //                   type="text"
 //                   required
 //                   value={applicationForm.name}
-//                   onChange={(e) =>
-//                     setApplicationForm({
-//                       ...applicationForm,
-//                       name: e.target.value,
-//                     })
-//                   }
+//                   onChange={(e) => setApplicationForm({ ...applicationForm, name: e.target.value })}
 //                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
 //                   placeholder="Enter your full name"
 //                 />
 //               </div>
 
 //               <div>
-//                 <label className="block text-gray-700 font-semibold mb-2">
-//                   Email Address *
-//                 </label>
+//                 <label className="block text-gray-700 font-semibold mb-2">Email Address *</label>
 //                 <input
 //                   type="email"
 //                   required
 //                   value={applicationForm.email}
-//                   onChange={(e) =>
-//                     setApplicationForm({
-//                       ...applicationForm,
-//                       email: e.target.value,
-//                     })
-//                   }
-//                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+//                   onChange={(e) => setApplicationForm({ ...applicationForm, email: e.target.value })}
+//                   className="w-full px-4 py-2 border rounded-lg"
 //                   placeholder="Enter your email"
 //                 />
 //               </div>
 
 //               <div>
-//                 <label className="block text-gray-700 font-semibold mb-2">
-//                   Phone Number *
-//                 </label>
+//                 <label className="block text-gray-700 font-semibold mb-2">Phone Number *</label>
 //                 <input
 //                   type="tel"
 //                   required
 //                   value={applicationForm.phone}
-//                   onChange={(e) =>
-//                     setApplicationForm({
-//                       ...applicationForm,
-//                       phone: e.target.value,
-//                     })
-//                   }
-//                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+//                   onChange={(e) => setApplicationForm({ ...applicationForm, phone: e.target.value })}
+//                   className="w-full px-4 py-2 border rounded-lg"
 //                   placeholder="Enter your phone number"
 //                 />
 //               </div>
 
 //               <div>
-//                 <label className="block text-gray-700 font-semibold mb-2">
-//                   Qualification *
-//                 </label>
+//                 <label className="block text-gray-700 font-semibold mb-2">Qualification *</label>
 //                 <select
 //                   required
 //                   value={applicationForm.qualification}
-//                   onChange={(e) =>
-//                     setApplicationForm({
-//                       ...applicationForm,
-//                       qualification: e.target.value,
-//                     })
-//                   }
-//                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+//                   onChange={(e) => setApplicationForm({ ...applicationForm, qualification: e.target.value })}
+//                   className="w-full px-4 py-2 border rounded-lg"
 //                 >
 //                   <option value="">Select Qualification</option>
 //                   <option>High School</option>
@@ -660,19 +599,12 @@
 //               </div>
 
 //               <div>
-//                 <label className="block text-gray-700 font-semibold mb-2">
-//                   Why should we select you?
-//                 </label>
+//                 <label className="block text-gray-700 font-semibold mb-2">Why should we select you?</label>
 //                 <textarea
 //                   rows="3"
 //                   value={applicationForm.message}
-//                   onChange={(e) =>
-//                     setApplicationForm({
-//                       ...applicationForm,
-//                       message: e.target.value,
-//                     })
-//                   }
-//                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+//                   onChange={(e) => setApplicationForm({ ...applicationForm, message: e.target.value })}
+//                   className="w-full px-4 py-2 border rounded-lg"
 //                   placeholder="Tell us about your skills and motivation..."
 //                 ></textarea>
 //               </div>
@@ -688,19 +620,11 @@
 //             </form>
 
 //             <div className="mt-4 flex gap-3 justify-center">
-//               <a
-//                 href="https://wa.me/918950026639"
-//                 target="_blank"
-//                 rel="noopener noreferrer"
-//               >
-//                 <button className="flex items-center gap-2 text-green-600 hover:text-green-700">
-//                   <FaWhatsapp /> WhatsApp
-//                 </button>
+//               <a href="https://wa.me/918950026639" target="_blank" rel="noopener noreferrer">
+//                 <button className="flex items-center gap-2 text-green-600 hover:text-green-700"><FaWhatsapp /> WhatsApp</button>
 //               </a>
 //               <a href="mailto:sjsglobaltech@gmail.com">
-//                 <button className="flex items-center gap-2 text-primary-600 hover:text-primary-700">
-//                   <FaEnvelope /> Email
-//                 </button>
+//                 <button className="flex items-center gap-2 text-primary-600 hover:text-primary-700"><FaEnvelope /> Email</button>
 //               </a>
 //             </div>
 //           </motion.div>
@@ -711,20 +635,12 @@
 //       <section className="py-16 bg-gradient-to-r from-primary-600 to-primary-800 text-white">
 //         <div className="container mx-auto px-4 text-center">
 //           <h2 className="text-3xl font-bold mb-4">Limited Slots Available!</h2>
-//           <p className="text-xl mb-6">
-//             Register now to secure your spot in our internship program
-//           </p>
+//           <p className="text-xl mb-6">Register now to secure your spot in our internship program</p>
 //           <div className="flex flex-col sm:flex-row gap-4 justify-center">
 //             <Link to="/contact">
-//               <button className="bg-orange-500 hover:bg-orange-600 px-8 py-3 rounded-lg font-semibold transition">
-//                 Contact Us
-//               </button>
+//               <button className="bg-orange-500 hover:bg-orange-600 px-8 py-3 rounded-lg font-semibold transition">Contact Us</button>
 //             </Link>
-//             <a
-//               href="https://wa.me/918950026639"
-//               target="_blank"
-//               rel="noopener noreferrer"
-//             >
+//             <a href="https://wa.me/918950026639" target="_blank" rel="noopener noreferrer">
 //               <button className="bg-transparent border-2 border-white hover:bg-white hover:text-primary-600 px-8 py-3 rounded-lg font-semibold transition flex items-center gap-2">
 //                 <FaWhatsapp /> Chat on WhatsApp
 //               </button>
@@ -737,6 +653,8 @@
 // };
 
 // export default Internship;
+
+
 
 
 import React, { useState, useEffect } from "react";
@@ -787,137 +705,60 @@ const Internship = () => {
     setLoading(true);
     try {
       const response = await api.get('/api/internships/');
+      console.log('API Response:', response.data);
+      
       if (response.data.success) {
-        setInternships(response.data.internships);
+        // Transform the data if needed to match your frontend structure
+        let internshipsData = response.data.internships;
+        
+        // If the data is an array directly
+        if (Array.isArray(response.data)) {
+          internshipsData = response.data;
+        }
+        
+        // Process internships to ensure all required fields exist
+        const processedInternships = internshipsData.map(internship => ({
+          id: internship.id,
+          internship_id: internship.internship_id || internship.id,
+          title: internship.title || "Untitled Internship",
+          category: internship.category || "General",
+          duration: internship.duration || "3 Months",
+          fee: internship.fee || 0,
+          originalFee: internship.original_fee || internship.originalFee || 19999,
+          stipend: internship.stipend || "Unpaid",
+          mode: internship.mode || "Online",
+          startDate: internship.start_date || internship.startDate || "Monthly Batch",
+          slots: internship.slots || 0,
+          enrolled: internship.enrolled || 0,
+          rating: internship.rating || 4.5,
+          description: internship.description || "No description available",
+          syllabus: internship.syllabus || [],
+          benefits: internship.benefits || [],
+          requirements: internship.requirements || [],
+          is_active: internship.is_active !== undefined ? internship.is_active : true,
+          created_at: internship.created_at
+        }));
+        
+        setInternships(processedInternships);
       } else {
-        setInternships(getFallbackInternships());
+        console.error('Failed to fetch internships:', response.data.message);
+        toast.error(response.data.message || 'Failed to load internships');
+        setInternships([]);
       }
     } catch (error) {
       console.error('Failed to fetch internships:', error);
-      toast.error('Failed to load internships');
-      setInternships(getFallbackInternships());
+      if (error.response?.status === 401) {
+        toast.error('Please login to view internships');
+      } else if (error.response?.status === 404) {
+        toast.error('Internship API not found. Please check backend configuration.');
+      } else {
+        toast.error('Failed to load internships. Please try again later.');
+      }
+      setInternships([]);
     } finally {
       setLoading(false);
     }
   };
-
-  // Fallback internships data
-  const getFallbackInternships = () => [
-    {
-      id: 1,
-      title: "Data Science Internship",
-      category: "Data Science",
-      duration: "3 Months",
-      fee: 6000,
-      originalFee: 19999,
-      stipend: "Unpaid",
-      mode: "Online",
-      startDate: "Monthly Batch",
-      slots: 50,
-      enrolled: 234,
-      rating: 4.9,
-      description: "Learn Data Science from scratch with real-world projects. Get hands-on experience in Python, SQL, and Machine Learning.",
-      syllabus: ["Python Programming Fundamentals", "Data Analysis with Pandas", "Data Visualization", "SQL for Data Science", "Machine Learning Basics", "Capstone Project"],
-      benefits: ["With Certification", "Live Projects", "Industry Mentors", "Placement Assistance", "Internship Certificate"],
-      requirements: ["Basic computer knowledge", "Graduate/Undergraduate students", "Commitment of 2 hours daily"],
-      is_active: true
-    },
-    {
-      id: 2,
-      title: "Web Development Internship",
-      category: "Development",
-      duration: "2 Months",
-      fee: 0,
-      originalFee: 14999,
-      stipend: "Unpaid",
-      mode: "Online",
-      startDate: "Monthly Batch",
-      slots: 40,
-      enrolled: 156,
-      rating: 4.8,
-      description: "Master MERN stack development. Build real websites and web applications with industry experts.",
-      syllabus: ["HTML/CSS Fundamentals", "JavaScript Essentials", "React JS", "Node JS & Express", "MongoDB Database", "Full Stack Projects"],
-      benefits: ["Live Coding Sessions", "Portfolio Development", "Certificate of Completion", "Interview Preparation", "GitHub Projects"],
-      requirements: ["Basic programming knowledge", "Laptop with 8GB RAM", "Self-learning attitude"],
-      is_active: true
-    },
-    {
-      id: 3,
-      title: "Digital Marketing Internship",
-      category: "Marketing",
-      duration: "2 Months",
-      fee: 0,
-      originalFee: 12999,
-      stipend: "Unpaid",
-      mode: "Online",
-      startDate: "Monthly Batch",
-      slots: 60,
-      enrolled: 189,
-      rating: 4.7,
-      description: "Learn SEO, Social Media Marketing, Google Ads, and Analytics. Get practical experience.",
-      syllabus: ["SEO Fundamentals", "Social Media Marketing", "Google Ads", "Google Analytics", "Email Marketing", "Content Strategy"],
-      benefits: ["Free Certification", "Live Campaigns", "Industry Tools Access", "Freelancing Tips", "Placement Support"],
-      requirements: ["Good communication skills", "Interest in digital marketing", "Creative mindset"],
-      is_active: true
-    },
-    {
-      id: 4,
-      title: "Data Analytics Internship",
-      category: "Analytics",
-      duration: "3 Months",
-      fee: 4999,
-      originalFee: 29999,
-      stipend: "Performance Based",
-      mode: "Hybrid",
-      startDate: "Next Batch: Jan 15",
-      slots: 30,
-      enrolled: 78,
-      rating: 4.9,
-      description: "Advanced Data Analytics program with Power BI, Tableau, and SQL. Get a stipend based on performance.",
-      syllabus: ["Advanced Excel", "SQL Mastery", "Power BI", "Tableau", "Business Intelligence", "Real-world Dashboards"],
-      benefits: ["With Certification", "Job Guarantee", "Industry Recognition", "LinkedIn Recommendations", "Premium Tools Access"],
-      requirements: ["Graduate in any stream", "Analytical mindset", "Knowledge of basic statistics"],
-      is_active: true
-    },
-    {
-      id: 5,
-      title: "AI/ML Internship",
-      category: "Artificial Intelligence",
-      duration: "4 Months",
-      fee: 9999,
-      originalFee: 49999,
-      stipend: "Yes (Based on performance)",
-      mode: "Online",
-      startDate: "Next Batch: Feb 1",
-      slots: 25,
-      enrolled: 45,
-      rating: 5.0,
-      description: "Advanced AI/ML program with deep learning, NLP, and computer vision. Top performers get stipend.",
-      syllabus: ["Python Advanced", "Machine Learning Algorithms", "Deep Learning", "NLP", "Computer Vision", "Research Projects"],
-      benefits: ["With Certification", "Research Projects", "Publication Support", "Industry Mentorship", "Job Referrals"],
-      requirements: ["Programming knowledge", "Mathematics background", "Passion for AI/ML"],
-      is_active: true
-    },
-    {
-      id: 6,
-      title: "Python Developer Internship",
-      category: "Development",
-      duration: "2 Months",
-      fee: 2999,
-      originalFee: 19999,
-      stipend: "Certificate Only",
-      mode: "Online",
-      startDate: "Monthly Batch",
-      slots: 35,
-      enrolled: 92,
-      rating: 4.8,
-      description: "Master Python development with real-world projects and become a professional developer.",
-      syllabus: ["Python Basics", "OOP Concepts", "Web Scraping", "API Development", "Django Framework", "Real Projects"],
-      benefits: ["Python Certificate", "Portfolio Review", "Mock Interviews", "Freelance Projects", "Community Access"],
-      requirements: ["Basic programming knowledge", "Dedication to learn", "Computer with internet"],
-      is_active: true
-    },
-  ];
 
   useEffect(() => {
     fetchInternships();
@@ -930,7 +771,6 @@ const Internship = () => {
     { number: "4.9", label: "Student Rating", icon: FaStar },
   ];
 
-  // ✅ FIXED: handleApply - Redirect to payment for paid internships
   const handleApply = (internship) => {
     // Check if user is logged in
     const token = localStorage.getItem('token');
@@ -941,7 +781,7 @@ const Internship = () => {
     }
     
     // Convert fee to number
-    const feeAmount = parseFloat(internship.fee);
+    const feeAmount = parseFloat(internship.fee) || 0;
     
     // Check if internship is FREE or PAID
     if (feeAmount === 0) {
@@ -998,6 +838,8 @@ const Internship = () => {
           internshipType: "",
           message: "",
         });
+        // Refresh internships to update enrolled count
+        fetchInternships();
       } else {
         toast.error(response.data.message || 'Failed to submit application');
       }
@@ -1006,6 +848,8 @@ const Internship = () => {
       if (error.response?.status === 401) {
         toast.error('Session expired. Please login again.');
         navigate('/login');
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data.message || 'Invalid application data');
       } else {
         toast.error(error.response?.data?.message || 'Failed to submit application');
       }
@@ -1104,7 +948,13 @@ const Internship = () => {
             <div className="text-center py-12">
               <FaLaptopCode className="text-6xl text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">No internships available at the moment.</p>
-              <p className="text-sm text-gray-400">Please check back later.</p>
+              <p className="text-sm text-gray-400">Please check back later or contact admin.</p>
+              <button 
+                onClick={fetchInternships}
+                className="mt-4 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+              >
+                Refresh
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -1175,28 +1025,36 @@ const Internship = () => {
                       {internship.fee === 0 ? (
                         <div className="text-center">
                           <span className="text-2xl font-bold text-green-600">FREE</span>
-                          <span className="text-gray-400 line-through ml-2">₹{internship.originalFee}</span>
+                          {internship.originalFee && (
+                            <span className="text-gray-400 line-through ml-2">₹{internship.originalFee}</span>
+                          )}
                         </div>
                       ) : (
                         <div className="text-center">
                           <span className="text-2xl font-bold text-primary-600">₹{internship.fee}</span>
-                          <span className="text-gray-400 line-through ml-2">₹{internship.originalFee}</span>
+                          {internship.originalFee && (
+                            <span className="text-gray-400 line-through ml-2">₹{internship.originalFee}</span>
+                          )}
                           <p className="text-xs text-gray-500 mt-1">{internship.stipend}</p>
                         </div>
                       )}
                     </div>
 
                     {/* Benefits Preview */}
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 text-sm text-green-600 mb-1">
-                        <FaCheckCircle />
-                        <span>{internship.benefits?.[0] || 'Certificate Included'}</span>
+                    {internship.benefits && internship.benefits.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 text-sm text-green-600 mb-1">
+                          <FaCheckCircle />
+                          <span>{internship.benefits[0]}</span>
+                        </div>
+                        {internship.benefits[1] && (
+                          <div className="flex items-center gap-2 text-sm text-green-600">
+                            <FaCheckCircle />
+                            <span>{internship.benefits[1]}</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-green-600">
-                        <FaCheckCircle />
-                        <span>{internship.benefits?.[1] || 'Practical Training'}</span>
-                      </div>
-                    </div>
+                    )}
 
                     {/* Buttons */}
                     <div className="flex gap-3">
