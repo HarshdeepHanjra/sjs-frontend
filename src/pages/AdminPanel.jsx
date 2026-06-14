@@ -1808,8 +1808,6 @@
 
 // export default AdminPanel;
 
-
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -1864,6 +1862,8 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  // Add this with your other state declarations
+  const [students, setStudents] = useState([]);
 
   // Payment Verification State
   const [paymentRequests, setPaymentRequests] = useState([]);
@@ -1884,9 +1884,12 @@ const AdminPanel = () => {
 
   // Internship Payments State
   const [internshipPayments, setInternshipPayments] = useState([]);
-  const [loadingInternshipPayments, setLoadingInternshipPayments] = useState(false);
-  const [selectedInternshipPayment, setSelectedInternshipPayment] = useState(null);
-  const [selectedStudentForCourse, setSelectedStudentForCourse] = useState(null);
+  const [loadingInternshipPayments, setLoadingInternshipPayments] =
+    useState(false);
+  const [selectedInternshipPayment, setSelectedInternshipPayment] =
+    useState(null);
+  const [selectedStudentForCourse, setSelectedStudentForCourse] =
+    useState(null);
   const [showCourseManager, setShowCourseManager] = useState(false);
 
   // Course Management State
@@ -1957,7 +1960,8 @@ const AdminPanel = () => {
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     const userType = sessionStorage.getItem("userType");
-    const userData = sessionStorage.getItem("user") || sessionStorage.getItem("userData");
+    const userData =
+      sessionStorage.getItem("user") || sessionStorage.getItem("userData");
 
     console.log("AdminPanel - Auth Check:", {
       token: !!token,
@@ -2019,12 +2023,108 @@ const AdminPanel = () => {
     };
   }, [navigate, activeSection]);
 
+  // Delete single student
+  const handleDeleteStudent = async (student) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${student.name}"? This will delete ALL their data including courses, internships, certificates, payments, and attendance records. This action cannot be undone!`,
+      )
+    ) {
+      try {
+        const token = sessionStorage.getItem("token");
+        const response = await api.delete(`/api/admin/students/${student.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.data.success) {
+          toast.success(response.data.message);
+          fetchStudents(); // Refresh student list
+        } else {
+          toast.error(response.data.message);
+        }
+      } catch (error) {
+        console.error("Failed to delete student:", error);
+        toast.error(
+          error.response?.data?.message || "Failed to delete student",
+        );
+      }
+    }
+  };
+
+  // Bulk delete students
+  const handleBulkDeleteStudents = async () => {
+    const selectedStudents = students.filter((s) => s.selected);
+    if (selectedStudents.length === 0) {
+      toast.error("Please select students to delete");
+      return;
+    }
+
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedStudents.length} student(s)? This will delete ALL their data and cannot be undone!`,
+      )
+    ) {
+      try {
+        const token = sessionStorage.getItem("token");
+        const response = await api.post(
+          "/api/admin/students/bulk-delete",
+          {
+            student_ids: selectedStudents.map((s) => s.id),
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+
+        if (response.data.success) {
+          toast.success(response.data.message);
+          fetchStudents();
+        } else {
+          toast.error(response.data.message);
+        }
+      } catch (error) {
+        console.error("Failed to bulk delete students:", error);
+        toast.error("Failed to delete students");
+      }
+    }
+  };
+
+  // Toggle student status
+  const handleToggleStudentStatus = async (student) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const newStatus = student.status === "active" ? "inactive" : "active";
+      const response = await api.patch(
+        `/api/admin/students/${student.id}/status`,
+        {
+          status: newStatus,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (response.data.success) {
+        toast.success(
+          `Student ${newStatus === "active" ? "activated" : "deactivated"} successfully`,
+        );
+        fetchStudents();
+      }
+    } catch (error) {
+      console.error("Failed to update student status:", error);
+      toast.error("Failed to update student status");
+    }
+  };
+
   // ✅ CERTIFICATE FUNCTIONS
   const fetchCertificates = async () => {
     setLoadingCertificates(true);
     try {
       const config = getAuthConfig();
-      const response = await api.get("/api/certificates/admin/certificates", config);
+      const response = await api.get(
+        "/api/certificates/admin/certificates",
+        config,
+      );
       if (response.data.success) {
         setCertificates(response.data.certificates);
       }
@@ -2065,7 +2165,9 @@ const AdminPanel = () => {
       }
     } catch (error) {
       console.error("Failed to generate certificate:", error);
-      toast.error(error.response?.data?.error || "Failed to generate certificate");
+      toast.error(
+        error.response?.data?.error || "Failed to generate certificate",
+      );
     } finally {
       setGeneratingCertificate(false);
     }
@@ -2141,7 +2243,9 @@ const AdminPanel = () => {
       }
     } catch (error) {
       console.error("Failed to delete certificate:", error);
-      toast.error(error.response?.data?.error || "Failed to delete certificate");
+      toast.error(
+        error.response?.data?.error || "Failed to delete certificate",
+      );
     } finally {
       setDeletingCertificate(false);
     }
@@ -2213,7 +2317,10 @@ const AdminPanel = () => {
     if (window.confirm(`Are you sure you want to delete "${course.name}"?`)) {
       try {
         const config = getAuthConfig();
-        const response = await api.delete(`/api/admin/courses/${course.id}`, config);
+        const response = await api.delete(
+          `/api/admin/courses/${course.id}`,
+          config,
+        );
         if (response.data.success) {
           toast.success("Course deleted successfully");
           await fetchCourses();
@@ -2238,7 +2345,9 @@ const AdminPanel = () => {
         config,
       );
       if (response.data.success) {
-        toast.success(`Course ${course.is_active ? "deactivated" : "activated"} successfully`);
+        toast.success(
+          `Course ${course.is_active ? "deactivated" : "activated"} successfully`,
+        );
         await fetchCourses();
         window.dispatchEvent(new CustomEvent("coursesUpdated"));
       }
@@ -2262,7 +2371,9 @@ const AdminPanel = () => {
       return;
     }
 
-    const savingToast = toast.loading(editingCourse ? "Updating course..." : "Adding course...");
+    const savingToast = toast.loading(
+      editingCourse ? "Updating course..." : "Adding course...",
+    );
 
     try {
       const config = getAuthConfig();
@@ -2279,15 +2390,24 @@ const AdminPanel = () => {
 
       let response;
       if (editingCourse) {
-        response = await api.put(`/api/admin/courses/${editingCourse.id}`, courseData, config);
+        response = await api.put(
+          `/api/admin/courses/${editingCourse.id}`,
+          courseData,
+          config,
+        );
       } else {
         response = await api.post("/api/admin/courses", courseData, config);
       }
 
       if (response.data.success) {
-        toast.success(editingCourse ? "Course updated successfully!" : "Course added successfully!", {
-          id: savingToast,
-        });
+        toast.success(
+          editingCourse
+            ? "Course updated successfully!"
+            : "Course added successfully!",
+          {
+            id: savingToast,
+          },
+        );
         setShowCourseModal(false);
         setCourseForm({
           name: "",
@@ -2337,11 +2457,21 @@ const AdminPanel = () => {
       if (response.data.success) {
         setPaymentStats(response.data.stats);
       } else {
-        setPaymentStats({ total_amount: 0, pending: 0, approved: 0, declined: 0 });
+        setPaymentStats({
+          total_amount: 0,
+          pending: 0,
+          approved: 0,
+          declined: 0,
+        });
       }
     } catch (error) {
       console.error("Failed to fetch stats:", error);
-      setPaymentStats({ total_amount: 0, pending: 0, approved: 0, declined: 0 });
+      setPaymentStats({
+        total_amount: 0,
+        pending: 0,
+        approved: 0,
+        declined: 0,
+      });
     }
   };
 
@@ -2354,7 +2484,7 @@ const AdminPanel = () => {
         {
           notes: adminNotes || "Payment verified and approved successfully.",
         },
-        config
+        config,
       );
 
       if (response.data.success) {
@@ -2372,12 +2502,17 @@ const AdminPanel = () => {
               studentId: request.student_id,
               coursesAdded: response.data.courses_added || [],
             },
-          })
+          }),
         );
         setSelectedRequest(null);
         setAdminNotes("");
-        if (response.data.courses_added && response.data.courses_added.length > 0) {
-          toast.success(`${response.data.courses_added.length} course(s) added to student's account`);
+        if (
+          response.data.courses_added &&
+          response.data.courses_added.length > 0
+        ) {
+          toast.success(
+            `${response.data.courses_added.length} course(s) added to student's account`,
+          );
         }
       } else {
         toast.error(response.data.message || "Failed to approve payment");
@@ -2394,9 +2529,13 @@ const AdminPanel = () => {
     setProcessingId(request.id);
     try {
       const config = getAuthConfig();
-      const response = await api.post(`/api/admin/payment-requests/${request.id}/decline`, {
-        notes: adminNotes || "Payment verification failed.",
-      }, config);
+      const response = await api.post(
+        `/api/admin/payment-requests/${request.id}/decline`,
+        {
+          notes: adminNotes || "Payment verification failed.",
+        },
+        config,
+      );
 
       if (response.data.success) {
         toast.success("Payment declined");
@@ -2436,7 +2575,10 @@ const AdminPanel = () => {
     setLoadingInternshipPayments(true);
     try {
       const config = getAuthConfig();
-      const response = await api.get("/api/admin/internship-payment-requests", config);
+      const response = await api.get(
+        "/api/admin/internship-payment-requests",
+        config,
+      );
       if (response.data.success) {
         setInternshipPayments(response.data.payments || []);
       }
@@ -2452,24 +2594,32 @@ const AdminPanel = () => {
     setProcessingId(payment.id);
     try {
       const config = getAuthConfig();
-      const response = await api.post(`/api/admin/internship-payment-requests/${payment.id}/approve`, {
-        notes: adminNotes || "Internship payment verified and approved.",
-      }, config);
+      const response = await api.post(
+        `/api/admin/internship-payment-requests/${payment.id}/approve`,
+        {
+          notes: adminNotes || "Internship payment verified and approved.",
+        },
+        config,
+      );
 
       if (response.data.success) {
         toast.success("Internship payment approved! Student enrolled.");
         await Promise.all([fetchInternshipPayments(), fetchPaymentStats()]);
         setSelectedInternshipPayment(null);
         setAdminNotes("");
-        window.dispatchEvent(new CustomEvent("internshipPaymentApproved", {
-          detail: { orderId: payment.order_id }
-        }));
+        window.dispatchEvent(
+          new CustomEvent("internshipPaymentApproved", {
+            detail: { orderId: payment.order_id },
+          }),
+        );
       } else {
         toast.error(response.data.message || "Failed to approve payment");
       }
     } catch (error) {
       console.error("Approval error:", error);
-      toast.error(error.response?.data?.message || "Failed to approve internship payment");
+      toast.error(
+        error.response?.data?.message || "Failed to approve internship payment",
+      );
     } finally {
       setProcessingId(null);
     }
@@ -2479,9 +2629,13 @@ const AdminPanel = () => {
     setProcessingId(payment.id);
     try {
       const config = getAuthConfig();
-      const response = await api.post(`/api/admin/internship-payment-requests/${payment.id}/decline`, {
-        notes: adminNotes || "Internship payment verification failed.",
-      }, config);
+      const response = await api.post(
+        `/api/admin/internship-payment-requests/${payment.id}/decline`,
+        {
+          notes: adminNotes || "Internship payment verification failed.",
+        },
+        config,
+      );
 
       if (response.data.success) {
         toast.success("Internship payment declined");
@@ -2500,20 +2654,37 @@ const AdminPanel = () => {
   };
 
   // ✅ STUDENTS FUNCTIONS
+  // const fetchStudents = async () => {
+  //   setLoadingStudents(true);
+  //   try {
+  //     const config = getAuthConfig();
+  //     const response = await api.get("/api/admin/students", config);
+  //     if (response.data.success) {
+  //       setStudents(response.data.students);
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to fetch students:", error);
+  //     toast.error("Failed to fetch students");
+  //   } finally {
+  //     setLoadingStudents(false);
+  //   }
+  // };
   const fetchStudents = async () => {
-    setLoadingStudents(true);
-    try {
-      const config = getAuthConfig();
-      const response = await api.get("/api/admin/students", config);
-      if (response.data.success) {
-        setStudents(response.data.students);
+      setLoadingStudents(true);
+      try {
+          const config = getAuthConfig();
+          const response = await api.get("/api/admin/students", config);
+          if (response.data.success) {
+              // Add selected property for checkboxes
+              const studentsWithSelection = response.data.students.map(s => ({ ...s, selected: false }));
+              setStudents(studentsWithSelection);
+          }
+      } catch (error) {
+          console.error("Failed to fetch students:", error);
+          toast.error("Failed to fetch students");
+      } finally {
+          setLoadingStudents(false);
       }
-    } catch (error) {
-      console.error("Failed to fetch students:", error);
-      toast.error("Failed to fetch students");
-    } finally {
-      setLoadingStudents(false);
-    }
   };
 
   const handleLogout = () => {
@@ -2532,8 +2703,16 @@ const AdminPanel = () => {
     { id: "courses", label: "Courses", icon: FaBook },
     { id: "attendance", label: "Attendance", icon: FaCalendarAlt },
     { id: "orders", label: "Orders", icon: FaCreditCard },
-    { id: "payment-verification", label: "Course Payments", icon: FaMoneyBillWave },
-    { id: "internship-payments", label: "Internship Payments", icon: FaBriefcase },
+    {
+      id: "payment-verification",
+      label: "Course Payments",
+      icon: FaMoneyBillWave,
+    },
+    {
+      id: "internship-payments",
+      label: "Internship Payments",
+      icon: FaBriefcase,
+    },
     { id: "internships", label: "Internships", icon: FaBriefcase },
     { id: "certificates", label: "Certificates", icon: FaCertificate },
     { id: "notices", label: "Notices", icon: FaBell },
@@ -2603,7 +2782,8 @@ const AdminPanel = () => {
                 setActiveSection(item.id);
                 if (item.id === "courses") fetchCourses();
                 if (item.id === "students") fetchStudents();
-                if (item.id === "internship-payments") fetchInternshipPayments();
+                if (item.id === "internship-payments")
+                  fetchInternshipPayments();
                 if (item.id === "orders") fetchOrders();
                 if (item.id === "payment-verification") {
                   fetchPaymentRequests();
@@ -2638,7 +2818,9 @@ const AdminPanel = () => {
       </div>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isMobile ? "ml-0" : "ml-64"}`}>
+      <div
+        className={`transition-all duration-300 ${isMobile ? "ml-0" : "ml-64"}`}
+      >
         {/* Header */}
         <div className="bg-white shadow-md p-4 sticky top-0 z-30">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -2655,7 +2837,8 @@ const AdminPanel = () => {
             )}
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Welcome, {admin?.full_name?.split(" ")[0] || admin?.username || "Admin"}!
+                Welcome,{" "}
+                {admin?.full_name?.split(" ")[0] || admin?.username || "Admin"}!
               </span>
             </div>
           </div>
@@ -2670,12 +2853,16 @@ const AdminPanel = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
                   <FaUsers className="text-primary-600 text-2xl sm:text-3xl mb-2" />
-                  <p className="text-xl sm:text-2xl font-bold">{students.length}</p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {students.length}
+                  </p>
                   <p className="text-gray-600 text-sm">Total Students</p>
                 </div>
                 <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
                   <FaBook className="text-primary-600 text-2xl sm:text-3xl mb-2" />
-                  <p className="text-xl sm:text-2xl font-bold">{courses.length}</p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {courses.length}
+                  </p>
                   <p className="text-gray-600 text-sm">Active Courses</p>
                 </div>
                 <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
@@ -2687,7 +2874,9 @@ const AdminPanel = () => {
                 </div>
                 <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
                   <FaMoneyBillWave className="text-primary-600 text-2xl sm:text-3xl mb-2" />
-                  <p className="text-xl sm:text-2xl font-bold">{paymentStats?.pending || 0}</p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {paymentStats?.pending || 0}
+                  </p>
                   <p className="text-gray-600 text-sm">Pending Verifications</p>
                 </div>
               </div>
@@ -2695,13 +2884,22 @@ const AdminPanel = () => {
               {/* Recent Data Grid - Responsive */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 overflow-x-auto">
-                  <h2 className="text-lg sm:text-xl font-bold mb-4">Recent Students</h2>
+                  <h2 className="text-lg sm:text-xl font-bold mb-4">
+                    Recent Students
+                  </h2>
                   <div className="space-y-2">
                     {students.slice(0, 5).map((student) => (
-                      <div key={student.id} className="flex justify-between items-center py-2 border-b">
+                      <div
+                        key={student.id}
+                        className="flex justify-between items-center py-2 border-b"
+                      >
                         <div>
-                          <p className="font-semibold text-sm sm:text-base">{student.name}</p>
-                          <p className="text-xs sm:text-sm text-gray-500">{student.email}</p>
+                          <p className="font-semibold text-sm sm:text-base">
+                            {student.name}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-500">
+                            {student.email}
+                          </p>
                         </div>
                         <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">
                           {student.status}
@@ -2712,21 +2910,30 @@ const AdminPanel = () => {
                 </div>
 
                 <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 overflow-x-auto">
-                  <h2 className="text-lg sm:text-xl font-bold mb-4">Recent Orders</h2>
+                  <h2 className="text-lg sm:text-xl font-bold mb-4">
+                    Recent Orders
+                  </h2>
                   <div className="space-y-2">
                     {orders.slice(0, 5).map((order) => (
-                      <div key={order.id} className="flex justify-between items-center py-2 border-b">
+                      <div
+                        key={order.id}
+                        className="flex justify-between items-center py-2 border-b"
+                      >
                         <div>
-                          <p className="font-semibold text-sm sm:text-base">{order.student_name}</p>
+                          <p className="font-semibold text-sm sm:text-base">
+                            {order.student_name}
+                          </p>
                           <p className="text-xs sm:text-sm text-gray-500">
                             ₹{order.total_amount?.toLocaleString()}
                           </p>
                         </div>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          order.payment_status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            order.payment_status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
                           {order.payment_status}
                         </span>
                       </div>
@@ -2738,7 +2945,7 @@ const AdminPanel = () => {
           )}
 
           {/* Students Section */}
-          {activeSection === "students" && (
+          {/* {activeSection === "students" && (
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[600px]">
@@ -2777,6 +2984,141 @@ const AdminPanel = () => {
                 </table>
               </div>
             </div>
+          )} */}
+
+          {activeSection === "students" && (
+            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="p-4 border-b flex justify-between items-center">
+                <h2 className="text-lg font-bold">Student Management</h2>
+                <div className="flex gap-2">
+                  {students.some((s) => s.selected) && (
+                    <button
+                      onClick={handleBulkDeleteStudents}
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2"
+                    >
+                      <FaTrash /> Delete Selected (
+                      {students.filter((s) => s.selected).length})
+                    </button>
+                  )}
+                  <button
+                    onClick={fetchStudents}
+                    className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center gap-2"
+                  >
+                    <FaRedo /> Refresh
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[800px]">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <input
+                          type="checkbox"
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setStudents(
+                              students.map((s) => ({
+                                ...s,
+                                selected: checked,
+                              })),
+                            );
+                          }}
+                        />
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Student ID
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Name
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Email
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Phone
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Status
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Joined
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {loadingStudents ? (
+                      <tr>
+                        <td colSpan="8" className="text-center py-8">
+                          <FaSpinner className="animate-spin mx-auto" />
+                        </td>
+                      </tr>
+                    ) : (
+                      students.map((student) => (
+                        <tr key={student.id} className="hover:bg-gray-50">
+                          <td className="px-4 sm:px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={student.selected || false}
+                              onChange={(e) => {
+                                setStudents(
+                                  students.map((s) =>
+                                    s.id === student.id
+                                      ? { ...s, selected: e.target.checked }
+                                      : s,
+                                  ),
+                                );
+                              }}
+                            />
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm font-mono">
+                            {student.student_id}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-sm font-medium">
+                            {student.name}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm">
+                            {student.email}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-sm">
+                            {student.phone || "-"}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4">
+                            <button
+                              onClick={() => handleToggleStudentStatus(student)}
+                              className={`px-2 py-1 rounded-full text-xs ${
+                                student.status === "active"
+                                  ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                  : "bg-red-100 text-red-800 hover:bg-red-200"
+                              }`}
+                            >
+                              {student.status}
+                            </button>
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-sm">
+                            {new Date(student.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleDeleteStudent(student)}
+                                className="text-red-600 hover:text-red-800"
+                                title="Delete Student (All data will be deleted)"
+                              >
+                                <FaTrash size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
 
           {/* Courses Section */}
@@ -2786,55 +3128,115 @@ const AdminPanel = () => {
                 <table className="w-full min-w-[800px]">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Course Name</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Students</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        ID
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Course Name
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Price
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Duration
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Level
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Students
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Rating
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Status
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {loadingCourses ? (
-                      <tr><td colSpan="9" className="text-center py-8"><FaSpinner className="animate-spin mx-auto" /></td></tr>
+                      <tr>
+                        <td colSpan="9" className="text-center py-8">
+                          <FaSpinner className="animate-spin mx-auto" />
+                        </td>
+                      </tr>
                     ) : (
                       courses.map((course) => (
                         <tr key={course.id} className="hover:bg-gray-50">
-                          <td className="px-4 sm:px-6 py-4 text-sm">{course.id}</td>
+                          <td className="px-4 sm:px-6 py-4 text-sm">
+                            {course.id}
+                          </td>
                           <td className="px-4 sm:px-6 py-4">
                             <div>
-                              <p className="font-medium text-gray-900 text-sm sm:text-base">{course.name}</p>
-                              <p className="text-xs text-gray-500">{course.course_code}</p>
+                              <p className="font-medium text-gray-900 text-sm sm:text-base">
+                                {course.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {course.course_code}
+                              </p>
                             </div>
-                           </td>
-                          <td className="px-4 sm:px-6 py-4 text-sm font-semibold text-primary-600">₹{course.price?.toLocaleString()}</td>
-                          <td className="px-4 sm:px-6 py-4 text-sm">{course.duration}</td>
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-sm font-semibold text-primary-600">
+                            ₹{course.price?.toLocaleString()}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-sm">
+                            {course.duration}
+                          </td>
                           <td className="px-4 sm:px-6 py-4">
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              course.level === "Advanced" ? "bg-red-100 text-red-800" :
-                              course.level === "Intermediate" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"
-                            }`}>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs ${
+                                course.level === "Advanced"
+                                  ? "bg-red-100 text-red-800"
+                                  : course.level === "Intermediate"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-green-100 text-green-800"
+                              }`}
+                            >
                               {course.level}
                             </span>
-                           </td>
-                          <td className="px-4 sm:px-6 py-4 text-sm">{course.students_enrolled}</td>
-                          <td className="px-4 sm:px-6 py-4 text-sm">{course.rating} ★</td>
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-sm">
+                            {course.students_enrolled}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-sm">
+                            {course.rating} ★
+                          </td>
                           <td className="px-4 sm:px-6 py-4">
-                            <button onClick={() => handleToggleCourseStatus(course)} className="flex items-center gap-1">
-                              {course.is_active ? <FaToggleOn className="text-green-600 text-lg sm:text-xl" /> : <FaToggleOff className="text-gray-400 text-lg sm:text-xl" />}
-                              <span className="text-xs hidden sm:inline">{course.is_active ? "Active" : "Inactive"}</span>
+                            <button
+                              onClick={() => handleToggleCourseStatus(course)}
+                              className="flex items-center gap-1"
+                            >
+                              {course.is_active ? (
+                                <FaToggleOn className="text-green-600 text-lg sm:text-xl" />
+                              ) : (
+                                <FaToggleOff className="text-gray-400 text-lg sm:text-xl" />
+                              )}
+                              <span className="text-xs hidden sm:inline">
+                                {course.is_active ? "Active" : "Inactive"}
+                              </span>
                             </button>
-                           </td>
+                          </td>
                           <td className="px-4 sm:px-6 py-4">
                             <div className="flex gap-2">
-                              <button onClick={() => handleEditCourse(course)} className="text-blue-600 hover:text-blue-800"><FaEdit size={16} /></button>
-                              <button onClick={() => handleDeleteCourse(course)} className="text-red-600 hover:text-red-800"><FaTrash size={16} /></button>
+                              <button
+                                onClick={() => handleEditCourse(course)}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <FaEdit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCourse(course)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <FaTrash size={16} />
+                              </button>
                             </div>
-                           </td>
-                         </tr>
+                          </td>
+                        </tr>
                       ))
                     )}
                   </tbody>
@@ -2853,31 +3255,57 @@ const AdminPanel = () => {
                 <table className="w-full min-w-[600px]">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Order ID
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Student
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Amount
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Status
+                      </th>
+                      <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Date
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {loadingOrders ? (
-                      <tr><td colSpan="5" className="text-center py-8"><FaSpinner className="animate-spin mx-auto" /></td></tr>
+                      <tr>
+                        <td colSpan="5" className="text-center py-8">
+                          <FaSpinner className="animate-spin mx-auto" />
+                        </td>
+                      </tr>
                     ) : (
                       orders.map((order) => (
                         <tr key={order.id} className="hover:bg-gray-50">
-                          <td className="px-4 sm:px-6 py-4 text-sm font-mono">{order.order_id}</td>
-                          <td className="px-4 sm:px-6 py-4 text-sm">{order.student_name}</td>
-                          <td className="px-4 sm:px-6 py-4 text-sm font-bold text-primary-600">₹{order.total_amount?.toLocaleString()}</td>
+                          <td className="px-4 sm:px-6 py-4 text-sm font-mono">
+                            {order.order_id}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-sm">
+                            {order.student_name}
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-sm font-bold text-primary-600">
+                            ₹{order.total_amount?.toLocaleString()}
+                          </td>
                           <td className="px-4 sm:px-6 py-4">
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              order.payment_status === "completed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                            }`}>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs ${
+                                order.payment_status === "completed"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
                               {order.payment_status}
                             </span>
-                           </td>
-                          <td className="px-4 sm:px-6 py-4 text-sm">{new Date(order.created_at).toLocaleDateString()}</td>
-                         </tr>
+                          </td>
+                          <td className="px-4 sm:px-6 py-4 text-sm">
+                            {new Date(order.created_at).toLocaleDateString()}
+                          </td>
+                        </tr>
                       ))
                     )}
                   </tbody>
@@ -2891,8 +3319,12 @@ const AdminPanel = () => {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Course Payment Verification</h2>
-                  <p className="text-gray-600 text-sm mt-1">Verify and approve student payment submissions</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+                    Course Payment Verification
+                  </h2>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Verify and approve student payment submissions
+                  </p>
                 </div>
                 <button
                   onClick={() => {
@@ -2901,7 +3333,11 @@ const AdminPanel = () => {
                   }}
                   className="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700 transition text-sm sm:text-base"
                 >
-                  {loadingRequests ? <FaSpinner className="animate-spin" /> : <FaRedo />}
+                  {loadingRequests ? (
+                    <FaSpinner className="animate-spin" />
+                  ) : (
+                    <FaRedo />
+                  )}
                   Refresh
                 </button>
               </div>
@@ -2910,15 +3346,21 @@ const AdminPanel = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                   <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
                     <p className="text-yellow-600 text-sm">Pending</p>
-                    <p className="text-2xl font-bold text-yellow-700">{paymentStats.pending || 0}</p>
+                    <p className="text-2xl font-bold text-yellow-700">
+                      {paymentStats.pending || 0}
+                    </p>
                   </div>
                   <div className="bg-green-50 rounded-xl p-4 border border-green-200">
                     <p className="text-green-600 text-sm">Approved</p>
-                    <p className="text-2xl font-bold text-green-700">{paymentStats.approved || 0}</p>
+                    <p className="text-2xl font-bold text-green-700">
+                      {paymentStats.approved || 0}
+                    </p>
                   </div>
                   <div className="bg-red-50 rounded-xl p-4 border border-red-200">
                     <p className="text-red-600 text-sm">Declined</p>
-                    <p className="text-2xl font-bold text-red-700">{paymentStats.declined || 0}</p>
+                    <p className="text-2xl font-bold text-red-700">
+                      {paymentStats.declined || 0}
+                    </p>
                   </div>
                 </div>
               )}
@@ -2926,44 +3368,68 @@ const AdminPanel = () => {
               {loadingRequests ? (
                 <div className="flex justify-center py-12">
                   <FaSpinner className="animate-spin text-4xl text-primary-600" />
-                  <p className="ml-3 text-gray-600">Loading payment requests...</p>
+                  <p className="ml-3 text-gray-600">
+                    Loading payment requests...
+                  </p>
                 </div>
               ) : paymentRequests.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-md p-8 sm:p-12 text-center">
                   <FaCheckCircle className="text-5xl sm:text-6xl text-green-500 mx-auto mb-4" />
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No Pending Requests</h3>
-                  <p className="text-gray-600 text-sm">All payment verification requests have been processed.</p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
+                    No Pending Requests
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    All payment verification requests have been processed.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {paymentRequests.map((request) => (
-                    <div key={request.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
+                    <div
+                      key={request.id}
+                      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition"
+                    >
                       <div className="p-4 sm:p-6">
                         <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                           <div className="flex-1">
                             <div className="flex flex-wrap items-center gap-2 mb-2">
-                              <h3 className="font-semibold text-base sm:text-lg">{request.student_name}</h3>
+                              <h3 className="font-semibold text-base sm:text-lg">
+                                {request.student_name}
+                              </h3>
                               <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
                                 {request.status || "Pending"}
                               </span>
                             </div>
-                            <p className="text-gray-600 text-xs sm:text-sm">{request.student_email}</p>
-                            <p className="text-gray-600 text-xs sm:text-sm mt-1">
-                              <strong>Transaction ID:</strong> {request.transaction_id || "N/A"}
+                            <p className="text-gray-600 text-xs sm:text-sm">
+                              {request.student_email}
                             </p>
-                            <p className="text-lg sm:text-xl font-bold text-primary-600 mt-2">₹{request.amount?.toLocaleString()}</p>
-                            <p className="text-xs text-gray-400 mt-2">Submitted: {new Date(request.created_at).toLocaleString()}</p>
+                            <p className="text-gray-600 text-xs sm:text-sm mt-1">
+                              <strong>Transaction ID:</strong>{" "}
+                              {request.transaction_id || "N/A"}
+                            </p>
+                            <p className="text-lg sm:text-xl font-bold text-primary-600 mt-2">
+                              ₹{request.amount?.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-2">
+                              Submitted:{" "}
+                              {new Date(request.created_at).toLocaleString()}
+                            </p>
                           </div>
                           <div className="flex gap-3">
                             {request.screenshot_url && (
                               <button
-                                onClick={() => setViewImage(request.screenshot_url)}
+                                onClick={() =>
+                                  setViewImage(request.screenshot_url)
+                                }
                                 className="bg-gray-100 text-gray-700 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center gap-2 text-sm"
                               >
                                 <FaEye /> View
                               </button>
                             )}
-                            <button onClick={() => setSelectedRequest(request)} className="bg-primary-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-primary-700 transition text-sm">
+                            <button
+                              onClick={() => setSelectedRequest(request)}
+                              className="bg-primary-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-primary-700 transition text-sm"
+                            >
                               Review
                             </button>
                           </div>
@@ -2982,51 +3448,93 @@ const AdminPanel = () => {
               <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold">Review Payment Verification</h3>
-                    <button onClick={() => { setSelectedRequest(null); setAdminNotes(""); }} className="text-gray-500 hover:text-gray-700">
+                    <h3 className="text-xl font-bold">
+                      Review Payment Verification
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setSelectedRequest(null);
+                        setAdminNotes("");
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
                       <FaTimes size={20} />
                     </button>
                   </div>
                   <div className="space-y-4">
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <h4 className="font-semibold mb-2">Student Information</h4>
-                      <p><strong>Name:</strong> {selectedRequest.student_name}</p>
-                      <p><strong>Email:</strong> {selectedRequest.student_email}</p>
+                      <h4 className="font-semibold mb-2">
+                        Student Information
+                      </h4>
+                      <p>
+                        <strong>Name:</strong> {selectedRequest.student_name}
+                      </p>
+                      <p>
+                        <strong>Email:</strong> {selectedRequest.student_email}
+                      </p>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <h4 className="font-semibold mb-2">Payment Information</h4>
-                      <p><strong>Order ID:</strong> {selectedRequest.order_id}</p>
-                      <p><strong>Amount:</strong> <span className="text-primary-600 font-bold">₹{selectedRequest.amount?.toLocaleString()}</span></p>
-                      <p><strong>Transaction ID:</strong> {selectedRequest.transaction_id || "N/A"}</p>
-                      <p><strong>Submitted:</strong> {new Date(selectedRequest.created_at).toLocaleString()}</p>
+                      <h4 className="font-semibold mb-2">
+                        Payment Information
+                      </h4>
+                      <p>
+                        <strong>Order ID:</strong> {selectedRequest.order_id}
+                      </p>
+                      <p>
+                        <strong>Amount:</strong>{" "}
+                        <span className="text-primary-600 font-bold">
+                          ₹{selectedRequest.amount?.toLocaleString()}
+                        </span>
+                      </p>
+                      <p>
+                        <strong>Transaction ID:</strong>{" "}
+                        {selectedRequest.transaction_id || "N/A"}
+                      </p>
+                      <p>
+                        <strong>Submitted:</strong>{" "}
+                        {new Date(selectedRequest.created_at).toLocaleString()}
+                      </p>
                     </div>
 
                     {selectedRequest.screenshot_url && (
                       <div>
-                        <label className="block text-gray-700 font-medium mb-2">Payment Screenshot</label>
+                        <label className="block text-gray-700 font-medium mb-2">
+                          Payment Screenshot
+                        </label>
                         <div
                           className="rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:shadow-lg transition"
-                          onClick={() => setViewImage(selectedRequest.screenshot_url)}
+                          onClick={() =>
+                            setViewImage(selectedRequest.screenshot_url)
+                          }
                         >
                           <img
-                            src={getScreenshotUrl(selectedRequest.screenshot_url)}
+                            src={getScreenshotUrl(
+                              selectedRequest.screenshot_url,
+                            )}
                             alt="Payment Screenshot"
                             className="w-full max-h-64 object-contain bg-gray-50"
                             onError={(e) => {
-                              console.error("Screenshot failed to load:", selectedRequest.screenshot_url);
-                              e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f0f0f0'/%3E%3Ctext x='200' y='150' font-family='Arial' font-size='14' fill='%23999' text-anchor='middle'%3ENo Screenshot Available%3C/text%3E%3C/svg%3E";
+                              console.error(
+                                "Screenshot failed to load:",
+                                selectedRequest.screenshot_url,
+                              );
+                              e.target.src =
+                                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f0f0f0'/%3E%3Ctext x='200' y='150' font-family='Arial' font-size='14' fill='%23999' text-anchor='middle'%3ENo Screenshot Available%3C/text%3E%3C/svg%3E";
                               e.target.onerror = null;
                             }}
                           />
                           <div className="bg-gray-50 p-2 text-center text-sm text-gray-600">
-                            <FaEye className="inline mr-1" /> Click to view full size
+                            <FaEye className="inline mr-1" /> Click to view full
+                            size
                           </div>
                         </div>
                       </div>
                     )}
 
                     <div>
-                      <label className="block text-gray-700 font-medium mb-2">Admin Notes (Optional)</label>
+                      <label className="block text-gray-700 font-medium mb-2">
+                        Admin Notes (Optional)
+                      </label>
                       <textarea
                         value={adminNotes}
                         onChange={(e) => setAdminNotes(e.target.value)}
@@ -3041,7 +3549,11 @@ const AdminPanel = () => {
                         disabled={processingId === selectedRequest.id}
                         className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 disabled:opacity-50"
                       >
-                        {processingId === selectedRequest.id ? <FaSpinner className="animate-spin" /> : <FaCheck />}
+                        {processingId === selectedRequest.id ? (
+                          <FaSpinner className="animate-spin" />
+                        ) : (
+                          <FaCheck />
+                        )}
                         Approve Payment
                       </button>
                       <button
@@ -3049,7 +3561,11 @@ const AdminPanel = () => {
                         disabled={processingId === selectedRequest.id}
                         className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2 disabled:opacity-50"
                       >
-                        {processingId === selectedRequest.id ? <FaSpinner className="animate-spin" /> : <FaTimesIcon />}
+                        {processingId === selectedRequest.id ? (
+                          <FaSpinner className="animate-spin" />
+                        ) : (
+                          <FaTimesIcon />
+                        )}
                         Decline Payment
                       </button>
                     </div>
@@ -3061,8 +3577,14 @@ const AdminPanel = () => {
 
           {/* Image View Modal */}
           {viewImage && (
-            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setViewImage(null)}>
-              <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+              onClick={() => setViewImage(null)}
+            >
+              <div
+                className="relative max-w-4xl max-h-[90vh]"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <button
                   onClick={() => setViewImage(null)}
                   className="absolute -top-12 right-0 text-white hover:text-gray-300 transition z-10"
@@ -3076,7 +3598,8 @@ const AdminPanel = () => {
                     className="max-w-full max-h-[85vh] object-contain rounded-lg"
                     onError={(e) => {
                       console.error("Image failed to load:", viewImage);
-                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='300' viewBox='0 0 500 300'%3E%3Crect width='500' height='300' fill='%23fff0f0'/%3E%3Ctext x='250' y='140' font-family='Arial' font-size='16' fill='%23d32f2f' text-anchor='middle'%3E⚠️ Screenshot Not Found%3C/text%3E%3Ctext x='250' y='170' font-family='Arial' font-size='12' fill='%23999' text-anchor='middle'%3EPlease ask student to re-upload%3C/text%3E%3C/svg%3E";
+                      e.target.src =
+                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='300' viewBox='0 0 500 300'%3E%3Crect width='500' height='300' fill='%23fff0f0'/%3E%3Ctext x='250' y='140' font-family='Arial' font-size='16' fill='%23d32f2f' text-anchor='middle'%3E⚠️ Screenshot Not Found%3C/text%3E%3Ctext x='250' y='170' font-family='Arial' font-size='12' fill='%23999' text-anchor='middle'%3EPlease ask student to re-upload%3C/text%3E%3C/svg%3E";
                       e.target.onerror = null;
                     }}
                   />
@@ -3109,55 +3632,96 @@ const AdminPanel = () => {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Internship Payment Requests</h2>
-                  <p className="text-gray-600 text-sm mt-1">Verify and approve internship payment submissions</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+                    Internship Payment Requests
+                  </h2>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Verify and approve internship payment submissions
+                  </p>
                 </div>
                 <button
                   onClick={fetchInternshipPayments}
                   className="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700 transition text-sm sm:text-base"
                 >
-                  {loadingInternshipPayments ? <FaSpinner className="animate-spin" /> : <FaRedo />}
+                  {loadingInternshipPayments ? (
+                    <FaSpinner className="animate-spin" />
+                  ) : (
+                    <FaRedo />
+                  )}
                   Refresh
                 </button>
               </div>
 
               {loadingInternshipPayments ? (
-                <div className="flex justify-center py-12"><FaSpinner className="animate-spin text-4xl text-primary-600" /></div>
+                <div className="flex justify-center py-12">
+                  <FaSpinner className="animate-spin text-4xl text-primary-600" />
+                </div>
               ) : internshipPayments.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-md p-8 sm:p-12 text-center">
                   <FaCheckCircle className="text-5xl sm:text-6xl text-green-500 mx-auto mb-4" />
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No Pending Internship Payments</h3>
-                  <p className="text-gray-600 text-sm">All internship payment requests have been processed.</p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
+                    No Pending Internship Payments
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    All internship payment requests have been processed.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {internshipPayments.map((payment) => (
-                    <div key={payment.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
+                    <div
+                      key={payment.id}
+                      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition"
+                    >
                       <div className="p-4 sm:p-6">
                         <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                           <div className="flex-1">
                             <div className="flex flex-wrap items-center gap-2 mb-2">
-                              <h3 className="font-semibold text-base sm:text-lg">{payment.student_name}</h3>
+                              <h3 className="font-semibold text-base sm:text-lg">
+                                {payment.student_name}
+                              </h3>
                               <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
-                                {payment.status === "pending_verification" ? "Pending" : payment.status}
+                                {payment.status === "pending_verification"
+                                  ? "Pending"
+                                  : payment.status}
                               </span>
                             </div>
-                            <p className="text-gray-600 text-xs sm:text-sm">{payment.student_email}</p>
-                            <p className="text-gray-600 text-xs sm:text-sm mt-1"><strong>Internship:</strong> {payment.internship_title}</p>
-                            <p className="text-gray-600 text-xs sm:text-sm mt-1"><strong>Transaction ID:</strong> {payment.transaction_id || "N/A"}</p>
-                            <p className="text-lg sm:text-xl font-bold text-primary-600 mt-2">Amount: ₹{payment.amount?.toLocaleString()}</p>
-                            <p className="text-xs text-gray-400 mt-2">Submitted: {new Date(payment.created_at).toLocaleString()}</p>
+                            <p className="text-gray-600 text-xs sm:text-sm">
+                              {payment.student_email}
+                            </p>
+                            <p className="text-gray-600 text-xs sm:text-sm mt-1">
+                              <strong>Internship:</strong>{" "}
+                              {payment.internship_title}
+                            </p>
+                            <p className="text-gray-600 text-xs sm:text-sm mt-1">
+                              <strong>Transaction ID:</strong>{" "}
+                              {payment.transaction_id || "N/A"}
+                            </p>
+                            <p className="text-lg sm:text-xl font-bold text-primary-600 mt-2">
+                              Amount: ₹{payment.amount?.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-2">
+                              Submitted:{" "}
+                              {new Date(payment.created_at).toLocaleString()}
+                            </p>
                           </div>
                           <div className="flex gap-3">
                             {payment.screenshot_url && (
                               <button
-                                onClick={() => setViewImage(payment.screenshot_url)}
+                                onClick={() =>
+                                  setViewImage(payment.screenshot_url)
+                                }
                                 className="bg-gray-100 text-gray-700 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center gap-2 text-sm"
                               >
                                 <FaEye /> View
                               </button>
                             )}
-                            <button onClick={() => setSelectedInternshipPayment(payment)} className="bg-primary-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-primary-700 transition text-sm">
+                            <button
+                              onClick={() =>
+                                setSelectedInternshipPayment(payment)
+                              }
+                              className="bg-primary-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-primary-700 transition text-sm"
+                            >
                               Review
                             </button>
                           </div>
@@ -3176,51 +3740,103 @@ const AdminPanel = () => {
               <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold">Review Internship Payment</h3>
-                    <button onClick={() => { setSelectedInternshipPayment(null); setAdminNotes(""); }} className="text-gray-500 hover:text-gray-700">
+                    <h3 className="text-xl font-bold">
+                      Review Internship Payment
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setSelectedInternshipPayment(null);
+                        setAdminNotes("");
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
                       <FaTimes size={20} />
                     </button>
                   </div>
                   <div className="space-y-4">
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <h4 className="font-semibold mb-2">Student Information</h4>
-                      <p><strong>Name:</strong> {selectedInternshipPayment.student_name}</p>
-                      <p><strong>Email:</strong> {selectedInternshipPayment.student_email}</p>
+                      <h4 className="font-semibold mb-2">
+                        Student Information
+                      </h4>
+                      <p>
+                        <strong>Name:</strong>{" "}
+                        {selectedInternshipPayment.student_name}
+                      </p>
+                      <p>
+                        <strong>Email:</strong>{" "}
+                        {selectedInternshipPayment.student_email}
+                      </p>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <h4 className="font-semibold mb-2">Internship Information</h4>
-                      <p><strong>Internship:</strong> {selectedInternshipPayment.internship_title}</p>
-                      <p><strong>Amount:</strong> <span className="text-primary-600 font-bold">₹{selectedInternshipPayment.amount?.toLocaleString()}</span></p>
-                      <p><strong>Transaction ID:</strong> {selectedInternshipPayment.transaction_id || "N/A"}</p>
-                      <p><strong>Submitted:</strong> {new Date(selectedInternshipPayment.created_at).toLocaleString()}</p>
+                      <h4 className="font-semibold mb-2">
+                        Internship Information
+                      </h4>
+                      <p>
+                        <strong>Internship:</strong>{" "}
+                        {selectedInternshipPayment.internship_title}
+                      </p>
+                      <p>
+                        <strong>Amount:</strong>{" "}
+                        <span className="text-primary-600 font-bold">
+                          ₹{selectedInternshipPayment.amount?.toLocaleString()}
+                        </span>
+                      </p>
+                      <p>
+                        <strong>Transaction ID:</strong>{" "}
+                        {selectedInternshipPayment.transaction_id || "N/A"}
+                      </p>
+                      <p>
+                        <strong>Submitted:</strong>{" "}
+                        {new Date(
+                          selectedInternshipPayment.created_at,
+                        ).toLocaleString()}
+                      </p>
                     </div>
 
                     {selectedInternshipPayment.screenshot_url && (
                       <div>
-                        <label className="block text-gray-700 font-medium mb-2">Payment Screenshot</label>
+                        <label className="block text-gray-700 font-medium mb-2">
+                          Payment Screenshot
+                        </label>
                         <div
                           className="rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:shadow-lg transition"
-                          onClick={() => setViewImage(selectedInternshipPayment.screenshot_url)}
+                          onClick={() =>
+                            setViewImage(
+                              selectedInternshipPayment.screenshot_url,
+                            )
+                          }
                         >
                           <img
-                            src={getScreenshotUrl(selectedInternshipPayment.screenshot_url)}
+                            src={getScreenshotUrl(
+                              selectedInternshipPayment.screenshot_url,
+                            )}
                             alt="Payment Screenshot"
                             className="w-full max-h-64 object-contain bg-gray-50"
                             onError={(e) => {
-                              console.error("Screenshot failed to load:", selectedInternshipPayment.screenshot_url);
-                              e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f0f0f0'/%3E%3Ctext x='200' y='150' font-family='Arial' font-size='14' fill='%23999' text-anchor='middle'%3ENo Screenshot Available%3C/text%3E%3C/svg%3E";
+                              console.error(
+                                "Screenshot failed to load:",
+                                selectedInternshipPayment.screenshot_url,
+                              );
+                              e.target.src =
+                                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f0f0f0'/%3E%3Ctext x='200' y='150' font-family='Arial' font-size='14' fill='%23999' text-anchor='middle'%3ENo Screenshot Available%3C/text%3E%3C/svg%3E";
                               e.target.onerror = null;
                             }}
                           />
                           <div className="bg-gray-50 p-2 text-center text-sm text-gray-600">
-                            <FaEye className="inline mr-1" /> Click to view full size
+                            <FaEye className="inline mr-1" /> Click to view full
+                            size
                           </div>
                         </div>
                       </div>
                     )}
 
                     <div>
-                      <label className="block text-gray-700 font-medium mb-2">Admin Notes <span className="text-gray-400 text-sm">(Optional)</span></label>
+                      <label className="block text-gray-700 font-medium mb-2">
+                        Admin Notes{" "}
+                        <span className="text-gray-400 text-sm">
+                          (Optional)
+                        </span>
+                      </label>
                       <textarea
                         value={adminNotes}
                         onChange={(e) => setAdminNotes(e.target.value)}
@@ -3231,19 +3847,31 @@ const AdminPanel = () => {
                     </div>
                     <div className="flex gap-3 pt-4">
                       <button
-                        onClick={() => handleInternshipApprove(selectedInternshipPayment)}
+                        onClick={() =>
+                          handleInternshipApprove(selectedInternshipPayment)
+                        }
                         disabled={processingId === selectedInternshipPayment.id}
                         className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 disabled:opacity-50"
                       >
-                        {processingId === selectedInternshipPayment.id ? <FaSpinner className="animate-spin" /> : <FaCheck />}
+                        {processingId === selectedInternshipPayment.id ? (
+                          <FaSpinner className="animate-spin" />
+                        ) : (
+                          <FaCheck />
+                        )}
                         Approve Payment
                       </button>
                       <button
-                        onClick={() => handleInternshipDecline(selectedInternshipPayment)}
+                        onClick={() =>
+                          handleInternshipDecline(selectedInternshipPayment)
+                        }
                         disabled={processingId === selectedInternshipPayment.id}
                         className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2 disabled:opacity-50"
                       >
-                        {processingId === selectedInternshipPayment.id ? <FaSpinner className="animate-spin" /> : <FaTimes />}
+                        {processingId === selectedInternshipPayment.id ? (
+                          <FaSpinner className="animate-spin" />
+                        ) : (
+                          <FaTimes />
+                        )}
                         Decline Payment
                       </button>
                     </div>
@@ -3261,10 +3889,17 @@ const AdminPanel = () => {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Certificate Management</h2>
-                  <p className="text-gray-600 text-sm mt-1">Manage and issue certificates to students</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+                    Certificate Management
+                  </h2>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Manage and issue certificates to students
+                  </p>
                 </div>
-                <button onClick={() => setShowCertificateModal(true)} className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition text-sm sm:text-base">
+                <button
+                  onClick={() => setShowCertificateModal(true)}
+                  className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition text-sm sm:text-base"
+                >
                   <FaPlus /> Generate Certificate
                 </button>
               </div>
@@ -3274,8 +3909,12 @@ const AdminPanel = () => {
                 <div className="bg-white rounded-lg shadow p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-500 text-sm">Total Certificates</p>
-                      <p className="text-2xl font-bold text-gray-800">{certificates.length}</p>
+                      <p className="text-gray-500 text-sm">
+                        Total Certificates
+                      </p>
+                      <p className="text-2xl font-bold text-gray-800">
+                        {certificates.length}
+                      </p>
                     </div>
                     <FaCertificate className="text-2xl text-primary-600" />
                   </div>
@@ -3285,7 +3924,10 @@ const AdminPanel = () => {
                     <div>
                       <p className="text-gray-500 text-sm">Active</p>
                       <p className="text-2xl font-bold text-green-600">
-                        {certificates.filter(c => c.status === "active").length}
+                        {
+                          certificates.filter((c) => c.status === "active")
+                            .length
+                        }
                       </p>
                     </div>
                     <FaCheckCircle className="text-2xl text-green-500" />
@@ -3296,7 +3938,10 @@ const AdminPanel = () => {
                     <div>
                       <p className="text-gray-500 text-sm">Revoked</p>
                       <p className="text-2xl font-bold text-red-600">
-                        {certificates.filter(c => c.status === "revoked").length}
+                        {
+                          certificates.filter((c) => c.status === "revoked")
+                            .length
+                        }
                       </p>
                     </div>
                     <FaTimesCircle className="text-2xl text-red-500" />
@@ -3306,12 +3951,18 @@ const AdminPanel = () => {
 
               {/* Certificates Table */}
               {loadingCertificates ? (
-                <div className="flex justify-center py-12"><FaSpinner className="animate-spin text-4xl text-primary-600" /></div>
+                <div className="flex justify-center py-12">
+                  <FaSpinner className="animate-spin text-4xl text-primary-600" />
+                </div>
               ) : certificates.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-md p-8 sm:p-12 text-center">
                   <FaCertificate className="text-5xl sm:text-6xl text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No Certificates Yet</h3>
-                  <p className="text-gray-600 text-sm">Generate certificates for students who complete courses.</p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
+                    No Certificates Yet
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Generate certificates for students who complete courses.
+                  </p>
                 </div>
               ) : (
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -3319,39 +3970,69 @@ const AdminPanel = () => {
                     <table className="w-full min-w-[800px]">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Certificate ID</th>
-                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
-                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
-                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Issue Date</th>
-                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
-                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Certificate ID
+                          </th>
+                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Student
+                          </th>
+                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Course
+                          </th>
+                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Issue Date
+                          </th>
+                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Score
+                          </th>
+                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Status
+                          </th>
+                          <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
                         {certificates.map((cert) => (
                           <tr key={cert.id} className="hover:bg-gray-50">
-                            <td className="px-4 sm:px-6 py-4 text-sm font-mono">{cert.certificate_id}</td>
+                            <td className="px-4 sm:px-6 py-4 text-sm font-mono">
+                              {cert.certificate_id}
+                            </td>
                             <td className="px-4 sm:px-6 py-4">
                               <div>
-                                <p className="font-medium text-gray-900 text-sm sm:text-base">{cert.student_name}</p>
-                                <p className="text-xs text-gray-500">{cert.student_email}</p>
+                                <p className="font-medium text-gray-900 text-sm sm:text-base">
+                                  {cert.student_name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {cert.student_email}
+                                </p>
                               </div>
-                             </td>
-                            <td className="px-4 sm:px-6 py-4 text-sm">{cert.course_name}</td>
-                            <td className="px-4 sm:px-6 py-4 text-sm">{new Date(cert.issue_date).toLocaleDateString()}</td>
-                            <td className="px-4 sm:px-6 py-4 text-sm font-semibold">{cert.score}%</td>
+                            </td>
+                            <td className="px-4 sm:px-6 py-4 text-sm">
+                              {cert.course_name}
+                            </td>
+                            <td className="px-4 sm:px-6 py-4 text-sm">
+                              {new Date(cert.issue_date).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 sm:px-6 py-4 text-sm font-semibold">
+                              {cert.score}%
+                            </td>
                             <td className="px-4 sm:px-6 py-4">
-                              <span className={`px-2 py-1 rounded-full text-xs ${cert.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs ${cert.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                              >
                                 {cert.status}
                               </span>
-                             </td>
+                            </td>
                             <td className="px-4 sm:px-6 py-4">
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => {
                                     const verificationUrl = `${window.location.origin}/verify-certificate?token=${cert.verification_token}`;
-                                    navigator.clipboard.writeText(verificationUrl);
+                                    navigator.clipboard.writeText(
+                                      verificationUrl,
+                                    );
                                     toast.success("Verification link copied!");
                                   }}
                                   className="text-green-600 hover:text-green-800"
@@ -3359,15 +4040,25 @@ const AdminPanel = () => {
                                 >
                                   <FaShare size={16} />
                                 </button>
-                                <button onClick={() => handleDownloadCertificate(cert)} className="text-blue-600 hover:text-blue-800" title="Download PDF">
+                                <button
+                                  onClick={() =>
+                                    handleDownloadCertificate(cert)
+                                  }
+                                  className="text-blue-600 hover:text-blue-800"
+                                  title="Download PDF"
+                                >
                                   <FaDownload size={16} />
                                 </button>
-                                <button onClick={() => confirmDelete(cert)} className="text-red-600 hover:text-red-800" title="Delete Certificate (Permanent)">
+                                <button
+                                  onClick={() => confirmDelete(cert)}
+                                  className="text-red-600 hover:text-red-800"
+                                  title="Delete Certificate (Permanent)"
+                                >
                                   <FaTrashAlt size={16} />
                                 </button>
                               </div>
-                             </td>
-                           </tr>
+                            </td>
+                          </tr>
                         ))}
                       </tbody>
                     </table>
@@ -3383,15 +4074,22 @@ const AdminPanel = () => {
               <div className="bg-white rounded-2xl max-w-md w-full">
                 <div className="p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg sm:text-xl font-bold">Generate Certificate</h3>
-                    <button onClick={() => setShowCertificateModal(false)} className="text-gray-500 hover:text-gray-700">
+                    <h3 className="text-lg sm:text-xl font-bold">
+                      Generate Certificate
+                    </h3>
+                    <button
+                      onClick={() => setShowCertificateModal(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
                       <FaTimes size={20} />
                     </button>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Select Student *</label>
+                      <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">
+                        Select Student *
+                      </label>
                       <select
                         value={selectedStudentId}
                         onChange={(e) => setSelectedStudentId(e.target.value)}
@@ -3399,13 +4097,17 @@ const AdminPanel = () => {
                       >
                         <option value="">Select Student</option>
                         {students.map((student) => (
-                          <option key={student.id} value={student.id}>{student.name} - {student.email}</option>
+                          <option key={student.id} value={student.id}>
+                            {student.name} - {student.email}
+                          </option>
                         ))}
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Select Course *</label>
+                      <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">
+                        Select Course *
+                      </label>
                       <select
                         value={selectedCourseId}
                         onChange={(e) => setSelectedCourseId(e.target.value)}
@@ -3413,19 +4115,25 @@ const AdminPanel = () => {
                       >
                         <option value="">Select Course</option>
                         {courses.map((course) => (
-                          <option key={course.id} value={course.id}>{course.name}</option>
+                          <option key={course.id} value={course.id}>
+                            {course.name}
+                          </option>
                         ))}
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Score (%)</label>
+                      <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">
+                        Score (%)
+                      </label>
                       <input
                         type="number"
                         min="0"
                         max="100"
                         value={certificateScore}
-                        onChange={(e) => setCertificateScore(parseInt(e.target.value))}
+                        onChange={(e) =>
+                          setCertificateScore(parseInt(e.target.value))
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm sm:text-base"
                       />
                     </div>
@@ -3436,9 +4144,16 @@ const AdminPanel = () => {
                         disabled={generatingCertificate}
                         className="flex-1 bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm sm:text-base"
                       >
-                        {generatingCertificate ? <FaSpinner className="animate-spin inline" /> : "Generate"}
+                        {generatingCertificate ? (
+                          <FaSpinner className="animate-spin inline" />
+                        ) : (
+                          "Generate"
+                        )}
                       </button>
-                      <button onClick={() => setShowCertificateModal(false)} className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 text-sm sm:text-base">
+                      <button
+                        onClick={() => setShowCertificateModal(false)}
+                        className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 text-sm sm:text-base"
+                      >
                         Cancel
                       </button>
                     </div>
@@ -3457,17 +4172,34 @@ const AdminPanel = () => {
                     <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <FaTrashAlt className="text-2xl text-red-600" />
                     </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">Delete Certificate</h3>
-                    <p className="text-gray-600 text-sm">Are you sure you want to permanently delete this certificate?</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">
+                      Delete Certificate
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Are you sure you want to permanently delete this
+                      certificate?
+                    </p>
                     <div className="mt-3 p-3 bg-yellow-50 rounded-lg">
                       <p className="text-xs sm:text-sm text-yellow-800">
-                        <strong>Certificate ID:</strong> {certificateToDelete.certificate_id}<br/>
-                        <strong>Student:</strong> {certificateToDelete.student_name}<br/>
-                        <strong>Course:</strong> {certificateToDelete.course_name}<br/>
-                        <strong>Issue Date:</strong> {new Date(certificateToDelete.issue_date).toLocaleDateString()}
+                        <strong>Certificate ID:</strong>{" "}
+                        {certificateToDelete.certificate_id}
+                        <br />
+                        <strong>Student:</strong>{" "}
+                        {certificateToDelete.student_name}
+                        <br />
+                        <strong>Course:</strong>{" "}
+                        {certificateToDelete.course_name}
+                        <br />
+                        <strong>Issue Date:</strong>{" "}
+                        {new Date(
+                          certificateToDelete.issue_date,
+                        ).toLocaleDateString()}
                       </p>
                     </div>
-                    <p className="text-xs text-red-500 mt-3">⚠️ This action cannot be undone. The certificate will be permanently removed.</p>
+                    <p className="text-xs text-red-500 mt-3">
+                      ⚠️ This action cannot be undone. The certificate will be
+                      permanently removed.
+                    </p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button
@@ -3475,11 +4207,20 @@ const AdminPanel = () => {
                       disabled={deletingCertificate}
                       className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 text-sm sm:text-base"
                     >
-                      {deletingCertificate ? <FaSpinner className="animate-spin" /> : <FaTrashAlt />}
-                      {deletingCertificate ? "Deleting..." : "Delete Permanently"}
+                      {deletingCertificate ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <FaTrashAlt />
+                      )}
+                      {deletingCertificate
+                        ? "Deleting..."
+                        : "Delete Permanently"}
                     </button>
                     <button
-                      onClick={() => { setShowDeleteConfirm(false); setCertificateToDelete(null); }}
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setCertificateToDelete(null);
+                      }}
                       className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 text-sm sm:text-base"
                     >
                       Cancel
@@ -3496,19 +4237,28 @@ const AdminPanel = () => {
               <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg sm:text-xl font-bold">{editingCourse ? "Edit Course" : "Add New Course"}</h3>
-                    <button onClick={() => setShowCourseModal(false)} className="text-gray-500 hover:text-gray-700">
+                    <h3 className="text-lg sm:text-xl font-bold">
+                      {editingCourse ? "Edit Course" : "Add New Course"}
+                    </h3>
+                    <button
+                      onClick={() => setShowCourseModal(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
                       <FaTimes size={20} />
                     </button>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Course Name *</label>
+                      <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">
+                        Course Name *
+                      </label>
                       <input
                         type="text"
                         value={courseForm.name}
-                        onChange={(e) => setCourseForm({ ...courseForm, name: e.target.value })}
+                        onChange={(e) =>
+                          setCourseForm({ ...courseForm, name: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm sm:text-base"
                         placeholder="Enter course name"
                         required
@@ -3517,22 +4267,36 @@ const AdminPanel = () => {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Price (₹) *</label>
+                        <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">
+                          Price (₹) *
+                        </label>
                         <input
                           type="number"
                           value={courseForm.price}
-                          onChange={(e) => setCourseForm({ ...courseForm, price: e.target.value })}
+                          onChange={(e) =>
+                            setCourseForm({
+                              ...courseForm,
+                              price: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm sm:text-base"
                           placeholder="Price"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Duration *</label>
+                        <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">
+                          Duration *
+                        </label>
                         <input
                           type="text"
                           value={courseForm.duration}
-                          onChange={(e) => setCourseForm({ ...courseForm, duration: e.target.value })}
+                          onChange={(e) =>
+                            setCourseForm({
+                              ...courseForm,
+                              duration: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm sm:text-base"
                           placeholder="e.g., 3 Months"
                           required
@@ -3541,10 +4305,17 @@ const AdminPanel = () => {
                     </div>
 
                     <div>
-                      <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Description</label>
+                      <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">
+                        Description
+                      </label>
                       <textarea
                         value={courseForm.description}
-                        onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
+                        onChange={(e) =>
+                          setCourseForm({
+                            ...courseForm,
+                            description: e.target.value,
+                          })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm sm:text-base"
                         rows="3"
                         placeholder="Course description"
@@ -3553,10 +4324,17 @@ const AdminPanel = () => {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Level</label>
+                        <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">
+                          Level
+                        </label>
                         <select
                           value={courseForm.level}
-                          onChange={(e) => setCourseForm({ ...courseForm, level: e.target.value })}
+                          onChange={(e) =>
+                            setCourseForm({
+                              ...courseForm,
+                              level: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm sm:text-base"
                         >
                           <option value="Beginner">Beginner</option>
@@ -3565,14 +4343,21 @@ const AdminPanel = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">Rating</label>
+                        <label className="block text-gray-700 font-medium mb-1 text-sm sm:text-base">
+                          Rating
+                        </label>
                         <input
                           type="number"
                           step="0.1"
                           min="0"
                           max="5"
                           value={courseForm.rating}
-                          onChange={(e) => setCourseForm({ ...courseForm, rating: e.target.value })}
+                          onChange={(e) =>
+                            setCourseForm({
+                              ...courseForm,
+                              rating: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm sm:text-base"
                         />
                       </div>
@@ -3583,10 +4368,17 @@ const AdminPanel = () => {
                         <input
                           type="checkbox"
                           checked={courseForm.is_active}
-                          onChange={(e) => setCourseForm({ ...courseForm, is_active: e.target.checked })}
+                          onChange={(e) =>
+                            setCourseForm({
+                              ...courseForm,
+                              is_active: e.target.checked,
+                            })
+                          }
                           className="w-4 h-4"
                         />
-                        <span className="text-gray-700 text-sm sm:text-base">Course Active (visible to students)</span>
+                        <span className="text-gray-700 text-sm sm:text-base">
+                          Course Active (visible to students)
+                        </span>
                       </label>
                     </div>
 
@@ -3595,9 +4387,13 @@ const AdminPanel = () => {
                         onClick={handleSaveCourse}
                         className="flex-1 bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 flex items-center justify-center gap-2 text-sm sm:text-base"
                       >
-                        <FaSave /> {editingCourse ? "Update Course" : "Add Course"}
+                        <FaSave />{" "}
+                        {editingCourse ? "Update Course" : "Add Course"}
                       </button>
-                      <button onClick={() => setShowCourseModal(false)} className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 text-sm sm:text-base">
+                      <button
+                        onClick={() => setShowCourseModal(false)}
+                        className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 text-sm sm:text-base"
+                      >
                         Cancel
                       </button>
                     </div>
@@ -3610,8 +4406,12 @@ const AdminPanel = () => {
           {/* Notices Section */}
           {activeSection === "notices" && (
             <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-bold mb-4">Notice Management</h2>
-              <p className="text-gray-600">Notice management features coming soon...</p>
+              <h2 className="text-lg sm:text-xl font-bold mb-4">
+                Notice Management
+              </h2>
+              <p className="text-gray-600">
+                Notice management features coming soon...
+              </p>
             </div>
           )}
         </div>
