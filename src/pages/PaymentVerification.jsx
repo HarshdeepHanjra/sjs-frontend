@@ -542,6 +542,10 @@
 
 // export default PaymentVerification;
 
+
+
+
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -557,11 +561,11 @@ import { useCart } from '../context/CartContext';
 const YOUR_UPI_ID = "sjsacademy@okhdfcbank";
 const YOUR_PHONE = "918950026639";
 
-// Load Razorpay script
-const loadRazorpayScript = () => {
+// Load Cashfree script
+const loadCashfreeScript = () => {
   return new Promise((resolve) => {
     const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
@@ -602,11 +606,10 @@ const PaymentVerification = () => {
         }
       } catch (error) {
         console.error('Failed to fetch payment methods:', error);
-        // Set default methods
         setPaymentMethods([
-          { id: 'upi', name: 'UPI', description: 'Instant access', icon: 'mobile-alt', is_available: true },
-          { id: 'razorpay', name: 'Cards/NetBanking', description: 'Instant', icon: 'credit-card', is_available: true },
-          // { id: 'bank_transfer', name: 'Bank Transfer', description: 'Manual', icon: 'university', is_available: true }
+          { id: 'upi', name: 'UPI', description: 'Instant access', is_available: true },
+          { id: 'cashfree', name: 'Cards/NetBanking', description: 'Instant', is_available: true },
+          { id: 'bank_transfer', name: 'Bank Transfer', description: 'Manual', is_available: true }
         ]);
       }
     };
@@ -814,8 +817,8 @@ const PaymentVerification = () => {
     toast.success("QR Code downloaded!");
   };
 
-  // Razorpay Payment Handler
-  const handleRazorpayPayment = async () => {
+  // Cashfree Payment Handler
+  const handleCashfreePayment = async () => {
     if (!orderData || orderData.isTemp) {
       toast.error('Please create a valid order');
       navigate('/cart');
@@ -824,93 +827,54 @@ const PaymentVerification = () => {
 
     setSubmitting(true);
     try {
-      const response = await api.post("/api/payment/create-razorpay-order", {
+      const response = await api.post("/api/payment/create-cashfree-order", {
         amount: orderData.totalAmount,
         order_type: 'course',
         courses: orderData.courses
       });
 
       if (response.data.success) {
-        const isLoaded = await loadRazorpayScript();
+        const isLoaded = await loadCashfreeScript();
         if (!isLoaded) {
           toast.error('Failed to load payment gateway');
           setSubmitting(false);
           return;
         }
 
-        const options = {
-          key: response.data.key_id,
-          amount: response.data.amount,
-          currency: response.data.currency,
-          name: "SJS Global Tech Academy",
-          description: "Course Purchase",
-          order_id: response.data.order_id,
-          handler: async (razorpayResponse) => {
-            try {
-              const verifyRes = await api.post("/api/payment/verify-razorpay-payment", {
-                order_id: razorpayResponse.razorpay_order_id,
-                payment_id: razorpayResponse.razorpay_payment_id,
-                signature: razorpayResponse.razorpay_signature
-              });
-
-              if (verifyRes.data.success) {
-                toast.success("Payment successful!");
-                clearCart();
-                localStorage.removeItem('sjs_cart');
-                setTimeout(() => {
-                  navigate("/my-courses");
-                }, 2000);
-              }
-            } catch (error) {
+        const cashfree = new window.Cashfree({
+          mode: "sandbox", // Change to "production" when live
+          paymentSessionId: response.data.payment_session_id
+        });
+        
+        cashfree.checkout({
+          paymentSessionId: response.data.payment_session_id,
+          redirectTarget: "_self"
+        }).then(async (result) => {
+          if (result.error) {
+            toast.error(result.error.message);
+          } else {
+            // Verify payment
+            const verifyRes = await api.post("/api/payment/verify-cashfree-payment", {
+              order_id: response.data.order_id
+            });
+            
+            if (verifyRes.data.success && verifyRes.data.status === 'PAID') {
+              toast.success("Payment successful!");
+              clearCart();
+              localStorage.removeItem('sjs_cart');
+              setTimeout(() => {
+                navigate("/my-courses");
+              }, 2000);
+            } else {
               toast.error("Payment verification failed");
             }
-          },
-          prefill: {
-            name: localStorage.getItem("userName") || "",
-            email: localStorage.getItem("userEmail") || "",
-            contact: localStorage.getItem("userPhone") || ""
-          },
-          theme: {
-            color: "#1a3a5c"
           }
-        };
-
-        const razorpay = new window.Razorpay(options);
-        razorpay.open();
+        });
       } else {
         toast.error("Failed to create payment order");
       }
     } catch (error) {
-      console.error("Razorpay error:", error);
-      toast.error(error.response?.data?.error || "Payment failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // PayPal Payment Handler
-  const handlePayPalPayment = async () => {
-    if (!orderData || orderData.isTemp) {
-      toast.error('Please create a valid order');
-      navigate('/cart');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const response = await api.post("/api/payment/create-paypal-payment", {
-        amount: orderData.totalAmount,
-        order_type: 'course',
-        courses: orderData.courses
-      });
-
-      if (response.data.success) {
-        window.location.href = response.data.approval_url;
-      } else {
-        toast.error("Failed to create PayPal payment");
-      }
-    } catch (error) {
-      console.error("PayPal error:", error);
+      console.error("Cashfree error:", error);
       toast.error(error.response?.data?.error || "Payment failed");
     } finally {
       setSubmitting(false);
@@ -1006,17 +970,6 @@ const PaymentVerification = () => {
     return `${seconds}s`;
   };
 
-  // Get icon for payment method
-  const getPaymentIcon = (methodId) => {
-    switch(methodId) {
-      case 'upi': return <FaMobileAlt className="text-blue-600 text-xl" />;
-      case 'razorpay': return <FaCreditCard className="text-purple-600 text-xl" />;
-      case 'paypal': return <FaPaypal className="text-blue-600 text-xl" />;
-      case 'bank_transfer': return <FaUniversity className="text-orange-600 text-xl" />;
-      default: return <FaCreditCard className="text-gray-600 text-xl" />;
-    }
-  };
-
   if (loadingOrder) {
     return (
       <div className="min-h-screen bg-gray-50 py-32">
@@ -1098,7 +1051,7 @@ const PaymentVerification = () => {
                 <FaMoneyBillWave className="text-primary-600" /> Order Summary
               </h3>
               <p className="text-sm text-gray-600 break-all">Order ID: {orderData.orderId}</p>
-              <p className="text-2xl font-bold text-primary-600 mt-2">Total: ₹{orderData.totalAmount?.toLocaleString()} / ${(orderData.totalAmount / 83).toFixed(2)} USD</p>
+              <p className="text-2xl font-bold text-primary-600 mt-2">Total: ₹{orderData.totalAmount?.toLocaleString()}</p>
               {orderData.courses?.map((course, idx) => (
                 <div key={idx} className="flex justify-between text-sm mt-2">
                   <span>{course.name}</span>
@@ -1110,46 +1063,33 @@ const PaymentVerification = () => {
             {/* Payment Method Selection */}
             <div className="mb-6">
               <h3 className="font-semibold mb-3">Select Payment Method</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* UPI Option */}
                 <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'upi' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('upi')}>
-                  <div className="flex flex-col items-center text-center gap-1">
-                    <FaMobileAlt className="text-blue-600 text-2xl" />
-                    <p className="font-semibold text-xs">UPI</p>
-                    <p className="text-xs text-gray-500">Instant</p>
-                    {selectedMethod === 'upi' && <FaCheckCircle className="text-primary-600 text-xs" />}
+                  <div className="flex items-center gap-2">
+                    <FaMobileAlt className="text-blue-600 text-xl" />
+                    <div><p className="font-semibold text-sm">UPI</p><p className="text-xs text-gray-500">Instant</p></div>
+                    {selectedMethod === 'upi' && <FaCheckCircle className="text-primary-600 ml-auto" />}
                   </div>
                 </div>
 
-                {/* Razorpay Option */}
-                <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'razorpay' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('razorpay')}>
-                  <div className="flex flex-col items-center text-center gap-1">
-                    <FaCreditCard className="text-purple-600 text-2xl" />
-                    <p className="font-semibold text-xs">Card/NetBanking</p>
-                    <p className="text-xs text-gray-500">Instant</p>
-                    {selectedMethod === 'razorpay' && <FaCheckCircle className="text-primary-600 text-xs" />}
-                  </div>
-                </div>
-
-                {/* PayPal Option */}
-                <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'paypal' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('paypal')}>
-                  <div className="flex flex-col items-center text-center gap-1">
-                    <FaPaypal className="text-blue-600 text-2xl" />
-                    <p className="font-semibold text-xs">PayPal</p>
-                    <p className="text-xs text-gray-500">International</p>
-                    {selectedMethod === 'paypal' && <FaCheckCircle className="text-primary-600 text-xs" />}
+                {/* Cashfree Option */}
+                <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'cashfree' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('cashfree')}>
+                  <div className="flex items-center gap-2">
+                    <FaCreditCard className="text-purple-600 text-xl" />
+                    <div><p className="font-semibold text-sm">Card/NetBanking</p><p className="text-xs text-gray-500">Instant</p></div>
+                    {selectedMethod === 'cashfree' && <FaCheckCircle className="text-primary-600 ml-auto" />}
                   </div>
                 </div>
 
                 {/* Bank Transfer Option */}
-                {/* <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'bank_transfer' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('bank_transfer')}> */}
-                  {/* <div className="flex flex-col items-center text-center gap-1"> */}
-                    {/* <FaUniversity className="text-orange-600 text-2xl" /> */}
-                    {/* <p className="font-semibold text-xs">Bank Transfer<//p> */}
-                    {/* <p className="text-xs text-gray-500">Manual</p> */}
-                    {/* {selectedMethod === 'bank_transfer' && <FaCheckCircle className="text-primary-600 text-xs" />} */}
-                  {/* </div> */}
-                {/* </div> */}
+                <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'bank_transfer' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('bank_transfer')}>
+                  <div className="flex items-center gap-2">
+                    <FaUniversity className="text-orange-600 text-xl" />
+                    <div><p className="font-semibold text-sm">Bank Transfer</p><p className="text-xs text-gray-500">Manual</p></div>
+                    {selectedMethod === 'bank_transfer' && <FaCheckCircle className="text-primary-600 ml-auto" />}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1186,29 +1126,15 @@ const PaymentVerification = () => {
               </div>
             )}
 
-            {/* Razorpay Section */}
-            {selectedMethod === 'razorpay' && (
+            {/* Cashfree Section */}
+            {selectedMethod === 'cashfree' && (
               <div className="space-y-4">
                 <div className="bg-purple-50 rounded-xl p-4 text-center">
                   <p className="text-sm">Pay securely with Credit/Debit Card, NetBanking, or UPI</p>
-                  <p className="text-xs text-gray-500 mt-2">Supports all Indian payment methods</p>
+                  <p className="text-xs text-gray-500 mt-2">Powered by Cashfree - Supports all Indian payment methods</p>
                 </div>
-                <button onClick={handleRazorpayPayment} disabled={submitting} className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-bold disabled:opacity-50 flex items-center justify-center gap-2">
-                  {submitting ? <FaSpinner className="animate-spin" /> : <FaCreditCard />} Pay with Razorpay →
-                </button>
-              </div>
-            )}
-
-            {/* PayPal Section */}
-            {selectedMethod === 'paypal' && (
-              <div className="space-y-4">
-                <div className="bg-blue-50 rounded-xl p-4 text-center">
-                  <p className="text-sm">Pay securely with PayPal</p>
-                  <p className="text-xs text-gray-500 mt-2">Supports International Cards & PayPal Balance</p>
-                  <p className="text-xs text-gray-500">Amount: ~${(orderData.totalAmount / 83).toFixed(2)} USD</p>
-                </div>
-                <button onClick={handlePayPalPayment} disabled={submitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold disabled:opacity-50 flex items-center justify-center gap-2">
-                  {submitting ? <FaSpinner className="animate-spin" /> : <FaPaypal />} Pay with PayPal →
+                <button onClick={handleCashfreePayment} disabled={submitting} className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                  {submitting ? <FaSpinner className="animate-spin" /> : <FaCreditCard />} Pay with Cashfree →
                 </button>
               </div>
             )}
