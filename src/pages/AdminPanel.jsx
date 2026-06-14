@@ -2226,7 +2226,7 @@ const AdminPanel = () => {
     try {
       const config = getAuthConfig();
       const response = await api.delete(
-        `/api/certificates/admin/certificates${certificateToDelete.id}`,
+        `/api/certificates/admin/certificates/${certificateToDelete.id}`,
         config,
       );
 
