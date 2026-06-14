@@ -33,7 +33,7 @@ const AdminInternshipManager = () => {
   const fetchInternships = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/internships/admin');
+      const response = await api.get('/api/internships/admin/all');
       if (response.data.success) {
         setInternships(response.data.internships);
       }
@@ -79,13 +79,13 @@ const AdminInternshipManager = () => {
       let response;
       if (editingInternship) {
         // Update existing internship
-        response = await api.put(`/api/internships/${editingInternship.id}`, formData, config);
+        response = await api.put(`/api/internships/admin/update/${editingInternship.id}`, formData, config)
         if (response.data.success) {
           toast.success('Internship updated successfully!');
         }
       } else {
         // Create new internship
-        response = await api.post('/api/internships', formData, config);
+        response = await api.post('/api/internships/admin/create', formData, config);
         if (response.data.success) {
           toast.success('Internship created successfully!');
         }
@@ -109,7 +109,7 @@ const AdminInternshipManager = () => {
     if (window.confirm('Are you sure you want to delete this internship?')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await api.delete(`/api/internships/${id}`, {
+        const response = await api.delete(`/api/internships/admin/delete/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -175,7 +175,7 @@ const AdminInternshipManager = () => {
   const toggleActiveStatus = async (id, currentStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await api.patch(`/api/internships/${id}/toggle-status`, 
+      const response = await api.patch(`/api/internships/admin/toggle-status/${id}`, 
         { is_active: !currentStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
