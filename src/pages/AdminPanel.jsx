@@ -63,7 +63,7 @@
 //   const [viewImage, setViewImage] = useState(null);
 
 //   // Students State
-//   const [students, setStudents] = useState([]);
+
 //   const [loadingStudents, setLoadingStudents] = useState(false);
 
 //   // Orders State
@@ -1862,8 +1862,6 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  // Add this with your other state declarations
-  const [students, setStudents] = useState([]);
 
   // Payment Verification State
   const [paymentRequests, setPaymentRequests] = useState([]);
