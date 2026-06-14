@@ -606,7 +606,7 @@ const PaymentVerification = () => {
         setPaymentMethods([
           { id: 'upi', name: 'UPI', description: 'Instant access', icon: 'mobile-alt', is_available: true },
           { id: 'razorpay', name: 'Cards/NetBanking', description: 'Instant', icon: 'credit-card', is_available: true },
-          { id: 'bank_transfer', name: 'Bank Transfer', description: 'Manual', icon: 'university', is_available: true }
+          // { id: 'bank_transfer', name: 'Bank Transfer', description: 'Manual', icon: 'university', is_available: true }
         ]);
       }
     };
@@ -1141,7 +1141,7 @@ const PaymentVerification = () => {
                   </div>
                 </div>
 
-                {/* Bank Transfer Option */}
+                {/* Bank Transfer Option
                 <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'bank_transfer' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('bank_transfer')}>
                   <div className="flex flex-col items-center text-center gap-1">
                     <FaUniversity className="text-orange-600 text-2xl" />
@@ -1149,7 +1149,7 @@ const PaymentVerification = () => {
                     <p className="text-xs text-gray-500">Manual</p>
                     {selectedMethod === 'bank_transfer' && <FaCheckCircle className="text-primary-600 text-xs" />}
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -1215,26 +1215,26 @@ const PaymentVerification = () => {
 
             {/* Bank Transfer Section */}
             {selectedMethod === 'bank_transfer' && (
-              <div className="space-y-4">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
-                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><FaBuilding className="text-primary-600" /> Bank Account Details</h3>
-                  {loadingBankDetails ? (
-                    <div className="text-center py-4"><FaSpinner className="animate-spin mx-auto" /><p className="text-sm mt-2">Loading...</p></div>
-                  ) : bankDetails ? (
-                    <div className="space-y-3">
-                      <div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Account Holder Name</p><div className="flex justify-between"><p className="font-semibold">{bankDetails.account_name}</p><button onClick={() => handleCopyToClipboard(bankDetails.account_name, 'Account Name')}>{copiedBankField === 'Account Name' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>
-                      <div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Account Number</p><div className="flex justify-between"><p className="font-bold text-primary-600">{bankDetails.account_number}</p><button onClick={() => handleCopyToClipboard(bankDetails.account_number, 'Account Number')}>{copiedBankField === 'Account Number' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>
-                      <div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">IFSC Code</p><div className="flex justify-between"><p className="font-semibold">{bankDetails.ifsc_code}</p><button onClick={() => handleCopyToClipboard(bankDetails.ifsc_code, 'IFSC Code')}>{copiedBankField === 'IFSC Code' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>
-                      <div className="grid grid-cols-2 gap-3"><div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Bank Name</p><p className="text-sm font-semibold">{bankDetails.bank_name}</p></div><div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Branch</p><p className="text-sm font-semibold">{bankDetails.branch}</p></div></div>
-                      {bankDetails.upi_id && <div className="bg-white rounded-lg p-3 border border-green-200 bg-green-50"><p className="text-xs text-gray-500">UPI ID (Alternate)</p><div className="flex justify-between"><p className="font-semibold text-green-700">{bankDetails.upi_id}</p><button onClick={() => handleCopyToClipboard(bankDetails.upi_id, 'UPI ID')}>{copiedBankField === 'UPI ID' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>}
-                    </div>
-                  ) : <div className="text-center py-4 text-red-500">Failed to load bank details</div>}
-                  <div className="mt-4 p-3 bg-yellow-50 rounded-lg"><p className="text-sm font-semibold mb-2">📝 Instructions:</p><ul className="text-xs space-y-1 list-disc list-inside"><li>Use the exact account number shown above</li><li>Include your Order ID in payment description</li><li>Upload screenshot below for verification</li></ul></div>
-                </div>
-                <div><label className="block font-semibold mb-2">Transaction ID / UTR Number *</label><input type="text" value={transactionId} onChange={(e) => setTransactionId(e.target.value)} className="w-full px-4 py-2 border rounded-lg" placeholder="Enter transaction ID" /></div>
-                <div><label className="block font-semibold mb-2">Payment Screenshot *</label><div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center"><FaUpload className="text-3xl text-gray-400 mx-auto mb-2" /><input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="bank-screenshot" /><label htmlFor="bank-screenshot" className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block">Choose File</label>{screenshot && <p className="text-sm text-green-600 mt-2">✓ {screenshot.name}</p>}{screenshotPreview && <img src={screenshotPreview} alt="Preview" className="max-h-32 mx-auto mt-2 rounded" />}</div></div>
-                <button onClick={handleManualPaymentSubmit} disabled={submitting || !transactionId || !screenshot} className="w-full bg-orange-500 text-white py-3 rounded-lg font-bold disabled:opacity-50">{submitting ? <FaSpinner className="animate-spin mx-auto" /> : 'Submit for Verification →'}</button>
-              </div>
+              // <div className="space-y-4">
+              //   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
+              //     <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><FaBuilding className="text-primary-600" /> Bank Account Details</h3>
+              //     {loadingBankDetails ? (
+              //       <div className="text-center py-4"><FaSpinner className="animate-spin mx-auto" /><p className="text-sm mt-2">Loading...</p></div>
+              //     ) : bankDetails ? (
+              //       <div className="space-y-3">
+              //         <div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Account Holder Name</p><div className="flex justify-between"><p className="font-semibold">{bankDetails.account_name}</p><button onClick={() => handleCopyToClipboard(bankDetails.account_name, 'Account Name')}>{copiedBankField === 'Account Name' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>
+              //         <div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Account Number</p><div className="flex justify-between"><p className="font-bold text-primary-600">{bankDetails.account_number}</p><button onClick={() => handleCopyToClipboard(bankDetails.account_number, 'Account Number')}>{copiedBankField === 'Account Number' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>
+              //         <div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">IFSC Code</p><div className="flex justify-between"><p className="font-semibold">{bankDetails.ifsc_code}</p><button onClick={() => handleCopyToClipboard(bankDetails.ifsc_code, 'IFSC Code')}>{copiedBankField === 'IFSC Code' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>
+              //         <div className="grid grid-cols-2 gap-3"><div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Bank Name</p><p className="text-sm font-semibold">{bankDetails.bank_name}</p></div><div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Branch</p><p className="text-sm font-semibold">{bankDetails.branch}</p></div></div>
+              //         {bankDetails.upi_id && <div className="bg-white rounded-lg p-3 border border-green-200 bg-green-50"><p className="text-xs text-gray-500">UPI ID (Alternate)</p><div className="flex justify-between"><p className="font-semibold text-green-700">{bankDetails.upi_id}</p><button onClick={() => handleCopyToClipboard(bankDetails.upi_id, 'UPI ID')}>{copiedBankField === 'UPI ID' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>}
+              //       </div>
+              //     ) : <div className="text-center py-4 text-red-500">Failed to load bank details</div>}
+              //     <div className="mt-4 p-3 bg-yellow-50 rounded-lg"><p className="text-sm font-semibold mb-2">📝 Instructions:</p><ul className="text-xs space-y-1 list-disc list-inside"><li>Use the exact account number shown above</li><li>Include your Order ID in payment description</li><li>Upload screenshot below for verification</li></ul></div>
+              //   </div>
+              //   <div><label className="block font-semibold mb-2">Transaction ID / UTR Number *</label><input type="text" value={transactionId} onChange={(e) => setTransactionId(e.target.value)} className="w-full px-4 py-2 border rounded-lg" placeholder="Enter transaction ID" /></div>
+              //   <div><label className="block font-semibold mb-2">Payment Screenshot *</label><div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center"><FaUpload className="text-3xl text-gray-400 mx-auto mb-2" /><input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="bank-screenshot" /><label htmlFor="bank-screenshot" className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block">Choose File</label>{screenshot && <p className="text-sm text-green-600 mt-2">✓ {screenshot.name}</p>}{screenshotPreview && <img src={screenshotPreview} alt="Preview" className="max-h-32 mx-auto mt-2 rounded" />}</div></div>
+              //   <button onClick={handleManualPaymentSubmit} disabled={submitting || !transactionId || !screenshot} className="w-full bg-orange-500 text-white py-3 rounded-lg font-bold disabled:opacity-50">{submitting ? <FaSpinner className="animate-spin mx-auto" /> : 'Submit for Verification →'}</button>
+              // </div>
             )}
 
             {/* Pending Status Section */}
