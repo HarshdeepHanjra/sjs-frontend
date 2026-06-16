@@ -362,25 +362,25 @@ const MyCourses = () => {
     </div>
 
     {/* Course Value Summary */}
-    {stats.total > 0 && (
-      <div className="mt-6 bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">
-          Course Investment Summary
-        </h3>
-        <p className="text-gray-600">
-          You have invested a total of{" "}
-          <strong className="text-primary-600">
-            ₹{stats.totalSpent.toLocaleString()}
-          </strong>{" "}
-          in your education. The skills you've gained have an estimated
-          value of{" "}
-          <strong className="text-green-600">
-            ₹{(stats.totalSpent * 3).toLocaleString()}+
-          </strong>{" "}
-          in the job market!
-        </p>
-      </div>
-    )}
+              {stats.total > 0 && (
+                <div className="mt-8 bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    Course Investment Summary
+                  </h3>
+                  <p className="text-gray-600">
+                    You have invested a total of{" "}
+                    <strong className="text-primary-600">
+                      ₹{stats.totalSpent.toLocaleString()}
+                    </strong>{" "}
+                    in your education. The skills you've gained have an estimated
+                    value of{" "}
+                    <strong className="text-green-600">
+                      ₹{(stats.totalSpent * 3).toLocaleString()}+
+                    </strong>{" "}
+                    in the job market!
+                  </p>
+                </div>
+              )}
   </>
 )}
         </div>
