@@ -98,6 +98,7 @@ const Footer = () => {
               <div className="flex items-center space-x-3">
                 <FaPhone className="text-primary-500" />
                 <span className="text-gray-400">+91 89500 26639</span>
+                <span className="text-gray-400">+91 94680 88336</span>
               </div>
               <div className="flex items-center space-x-3">
                 <FaEnvelope className="text-primary-500" />
@@ -106,6 +107,7 @@ const Footer = () => {
               <div className="flex items-center space-x-3">
                 <FaWhatsapp className="text-green-500" />
                 <span className="text-gray-400">+91 89500 26639 (WhatsApp)</span>
+                <span className="text-gray-400">+91 94680 88336 (WhatsApp)</span>
               </div>
             </div>
           </div>
