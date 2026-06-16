@@ -310,15 +310,55 @@ const Login = () => {
 
 // Update handleStudentLogin function
 
+// const handleStudentLogin = async () => {
+//   try {
+//     setLoading(true);
+//     const response = await api.post('/api/auth/student/login', {
+//       email: formData.email,
+//       password: formData.password
+//     });
+    
+//     console.log('Student login response:', response.data);
+    
+//     if (response.data.access_token) {
+//       const studentData = {
+//         ...response.data.student,
+//         userType: 'student',
+//         role: 'student'
+//       };
+      
+//       // Login the user
+//       login(response.data.access_token, studentData, 'student');
+//       toast.success(`Welcome back, ${response.data.student.name}!`);
+      
+//       // ✅ Redirect to DASHBOARD (not home page)
+//       navigate('/dashboard');
+//     }
+//   } catch (error) {
+//     console.error('Student login error:', error);
+//     toast.error(
+//       error.response?.data?.error ||
+//       error.response?.data?.message ||
+//       'Login failed'
+//     );
+//   } finally {
+//     setLoading(false);
+//   }
+
+  // Login.jsx - handleStudentLogin me CORS handling
+
 const handleStudentLogin = async () => {
   try {
     setLoading(true);
+    
+    console.log('📤 Sending login request to:', `${api.defaults.baseURL}/api/auth/student/login`);
+    
     const response = await api.post('/api/auth/student/login', {
       email: formData.email,
       password: formData.password
     });
     
-    console.log('Student login response:', response.data);
+    console.log('📥 Login response:', response.data);
     
     if (response.data.access_token) {
       const studentData = {
@@ -327,20 +367,45 @@ const handleStudentLogin = async () => {
         role: 'student'
       };
       
-      // Login the user
       login(response.data.access_token, studentData, 'student');
       toast.success(`Welcome back, ${response.data.student.name}!`);
-      
-      // ✅ Redirect to DASHBOARD (not home page)
       navigate('/dashboard');
     }
   } catch (error) {
-    console.error('Student login error:', error);
-    toast.error(
-      error.response?.data?.error ||
-      error.response?.data?.message ||
-      'Login failed'
-    );
+    console.error('❌ Student login error:', error);
+    console.error('❌ Error config:', error.config);
+    console.error('❌ Error response:', error.response);
+    
+    // ✅ CORS specific error
+    if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      toast.error('Connection issue. Please check if backend is running.');
+      // ✅ Try direct URL as fallback
+      try {
+        console.log('🔄 Retrying with direct URL...');
+        const directResponse = await axios.post(
+          'https://sjs-backend-new.onrender.com/api/auth/student/login',
+          {
+            email: formData.email,
+            password: formData.password
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          }
+        );
+        console.log('📥 Direct response:', directResponse.data);
+        // Handle response...
+      } catch (retryError) {
+        console.error('❌ Retry failed:', retryError);
+        toast.error('Server not responding. Please try again later.');
+      }
+    } else if (error.response?.status === 401) {
+      toast.error(error.response?.data?.error || 'Invalid credentials');
+    } else {
+      toast.error(error.response?.data?.error || 'Login failed. Please try again.');
+    }
   } finally {
     setLoading(false);
   }
