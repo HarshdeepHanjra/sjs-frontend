@@ -81,7 +81,7 @@ const Contact = () => {
     {
       icon: FaWhatsapp,
       title: 'WhatsApp',
-      details: ['+91 89500 26639 (24/7 Support)', ],
+      details: ['+91 89500 26639 (24/7 Support)', '+91 94680 88336' ],
       color: 'bg-green-100 text-green-600',
       action: () => window.open('https://wa.me/918950026639', '_blank')
     },
