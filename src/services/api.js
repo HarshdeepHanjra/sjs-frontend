@@ -72,7 +72,7 @@ const API_URL = 'https://sjs-backend-new.onrender.com';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 60000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
