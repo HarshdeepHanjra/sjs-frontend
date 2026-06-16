@@ -554,8 +554,6 @@
 
 
 
-
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -571,9 +569,10 @@ import { useCart } from '../context/CartContext';
 const YOUR_UPI_ID = "sjsacademy@okhdfcbank";
 const YOUR_PHONE = "918950026639";
 
-// Load Cashfree script with proper error handling
+// Load Cashfree script
 const loadCashfreeScript = () => {
   return new Promise((resolve) => {
+    // Check if already loaded
     if (window.Cashfree) {
       resolve(true);
       return;
@@ -583,7 +582,7 @@ const loadCashfreeScript = () => {
     script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
     script.async = true;
     script.onload = () => {
-      // Wait a bit for initialization
+      // Small delay to ensure initialization
       setTimeout(() => resolve(true), 500);
     };
     script.onerror = () => resolve(false);
@@ -612,7 +611,24 @@ const PaymentVerification = () => {
   const [loadingBankDetails, setLoadingBankDetails] = useState(false);
   const [copiedBankField, setCopiedBankField] = useState(null);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  const [paymentEnvironment, setPaymentEnvironment] = useState('sandbox');
 
+  // Fetch available payment methods
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      try {
+        const response = await api.get('/api/payment/payment-methods');
+        if (response.data.success) {
+          setPaymentEnvironment(response.data.environment || 'sandbox');
+        }
+      } catch (error) {
+        console.error('Failed to fetch payment methods:', error);
+      }
+    };
+    fetchPaymentMethods();
+  }, []);
+
+  // Load order data
   useEffect(() => {
     const loadOrderData = async () => {
       const token = localStorage.getItem('token');
@@ -671,12 +687,14 @@ const PaymentVerification = () => {
     loadOrderData();
   }, [location.state, navigate]);
 
+  // Fetch bank details when bank transfer is selected
   useEffect(() => {
     if (selectedMethod === 'bank_transfer') {
       fetchBankDetails();
     }
   }, [selectedMethod]);
 
+  // Timer for pending status
   useEffect(() => {
     let interval;
     if (verificationStatus === 'pending') {
@@ -689,6 +707,7 @@ const PaymentVerification = () => {
     };
   }, [verificationStatus]);
 
+  // Auto-check status every 15 seconds
   useEffect(() => {
     let interval;
     if (verificationId && verificationStatus === 'pending') {
@@ -810,6 +829,7 @@ const PaymentVerification = () => {
     toast.success("QR Code downloaded!");
   };
 
+  // Cashfree Payment Handler - Updated for Sandbox
   const handleCashfreePayment = async () => {
     if (!orderData || orderData.isTemp) {
       toast.error('Please create a valid order');
@@ -822,7 +842,7 @@ const PaymentVerification = () => {
     try {
       // Get user details from localStorage
       const userStr = localStorage.getItem('user');
-      let customerEmail = 'customer@example.com';
+      let customerEmail = 'test@example.com';
       let customerPhone = '9999999999';
       
       if (userStr) {
@@ -833,7 +853,7 @@ const PaymentVerification = () => {
         } catch (e) {}
       }
 
-      console.log('Creating Cashfree order with:', {
+      console.log('Creating Cashfree order...', {
         amount: orderData.totalAmount,
         customerEmail,
         customerPhone
@@ -847,20 +867,20 @@ const PaymentVerification = () => {
         customer_phone: customerPhone
       });
 
-      console.log('Cashfree order response:', response.data);
+      console.log('Order creation response:', response.data);
 
       if (response.data.success && response.data.payment_session_id) {
         // Load Cashfree script
         const isLoaded = await loadCashfreeScript();
         if (!isLoaded) {
-          toast.error('Failed to load payment gateway. Please try again.');
+          toast.error('Failed to load payment gateway. Please refresh and try again.');
           setSubmitting(false);
           return;
         }
 
         // Initialize Cashfree
         const cashfree = new window.Cashfree({
-          mode: "production" // Use "sandbox" for testing
+          mode: paymentEnvironment === 'production' ? "production" : "sandbox"
         });
         
         // Open checkout
@@ -870,10 +890,12 @@ const PaymentVerification = () => {
         });
         
         if (result && result.error) {
-          console.error('Cashfree checkout error:', result.error);
+          console.error('Checkout error:', result.error);
           toast.error(result.error.message || 'Payment failed. Please try again.');
         } else {
-          // Payment successful - verify on backend
+          toast.loading('Verifying payment...', { duration: 3000 });
+          
+          // Verify payment on backend
           const verifyRes = await api.post("/api/payment/verify-cashfree-payment", {
             order_id: response.data.order_id
           });
@@ -887,7 +909,7 @@ const PaymentVerification = () => {
               navigate("/my-courses");
             }, 2000);
           } else {
-            toast.error("Payment verification failed. Please contact support.");
+            toast.error("Payment verification pending. You will receive an email once confirmed.");
           }
         }
       } else {
@@ -897,6 +919,11 @@ const PaymentVerification = () => {
       console.error("Cashfree error:", error);
       const errorMessage = error.response?.data?.error || error.response?.data?.message || "Payment failed. Please try again.";
       toast.error(errorMessage);
+      
+      // Show test card info for sandbox
+      if (paymentEnvironment === 'sandbox') {
+        toast.info("Test Card: 4111 1111 1111 1111 | Exp: 12/25 | CVV: 123 | OTP: 123456");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -1063,6 +1090,11 @@ const PaymentVerification = () => {
           <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-6 text-white text-center">
             <h1 className="text-2xl font-bold">Complete Payment</h1>
             <p className="text-primary-100 mt-1">Choose your payment method</p>
+            {paymentEnvironment === 'sandbox' && (
+              <p className="text-xs bg-yellow-500/20 mt-2 p-1 rounded">
+                🧪 Test Mode - Use test card: 4111 1111 1111 1111
+              </p>
+            )}
           </div>
 
           <div className="p-6">
@@ -1188,19 +1220,33 @@ const PaymentVerification = () => {
               </div>
             )}
 
-            {/* Cashfree Section */}
+            {/* Cashfree Section - Updated with test card info */}
             {selectedMethod === 'cashfree' && (
               <div className="space-y-4">
-                <div className="bg-purple-50 rounded-xl p-4 text-center">
-                  <p className="text-sm">Pay securely with Credit/Debit Card, NetBanking, or UPI</p>
-                  <p className="text-xs text-gray-500 mt-2">Powered by Cashfree - Supports all Indian payment methods</p>
+                <div className="bg-purple-50 rounded-xl p-4">
+                  <p className="text-sm font-semibold mb-2">Pay securely with:</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <span className="bg-white px-2 py-1 rounded text-xs">💳 Credit Card</span>
+                    <span className="bg-white px-2 py-1 rounded text-xs">💳 Debit Card</span>
+                    <span className="bg-white px-2 py-1 rounded text-xs">🏦 NetBanking</span>
+                    <span className="bg-white px-2 py-1 rounded text-xs">📱 UPI</span>
+                  </div>
+                  {paymentEnvironment === 'sandbox' && (
+                    <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 mt-2">
+                      <p className="text-xs font-bold text-yellow-800 mb-1">🧪 Test Mode Details:</p>
+                      <p className="text-xs text-yellow-700">Card: 4111 1111 1111 1111</p>
+                      <p className="text-xs text-yellow-700">Expiry: 12/25 | CVV: 123</p>
+                      <p className="text-xs text-yellow-700">OTP: 123456 (any 6 digits)</p>
+                    </div>
+                  )}
                 </div>
                 <button 
                   onClick={handleCashfreePayment} 
                   disabled={submitting} 
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {submitting ? <FaSpinner className="animate-spin" /> : <FaCreditCard />} Pay with Cashfree →
+                  {submitting ? <FaSpinner className="animate-spin" /> : <FaCreditCard />} 
+                  Pay ₹{orderData.totalAmount?.toLocaleString('en-IN')} via Card/NetBanking →
                 </button>
               </div>
             )}
