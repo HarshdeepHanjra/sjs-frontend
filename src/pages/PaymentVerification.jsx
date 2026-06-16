@@ -546,13 +546,23 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   FaUpload, FaCheckCircle, FaClock, FaTimesCircle, FaArrowLeft, 
   FaWhatsapp, FaEnvelope, FaSpinner, FaEye, FaCopy, FaDownload, 
-  FaCreditCard, FaUniversity, FaMobileAlt, FaGooglePay,
-  FaMoneyBillWave, FaBuilding, FaCopy as FaCopyIcon, FaPaypal
+  FaCreditCard, FaUniversity, FaMobileAlt,
+  FaMoneyBillWave, FaBuilding, FaCopy as FaCopyIcon
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -561,12 +571,21 @@ import { useCart } from '../context/CartContext';
 const YOUR_UPI_ID = "sjsacademy@okhdfcbank";
 const YOUR_PHONE = "918950026639";
 
-// Load Cashfree script
+// Load Cashfree script with proper error handling
 const loadCashfreeScript = () => {
   return new Promise((resolve) => {
+    if (window.Cashfree) {
+      resolve(true);
+      return;
+    }
+    
     const script = document.createElement('script');
     script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
-    script.onload = () => resolve(true);
+    script.async = true;
+    script.onload = () => {
+      // Wait a bit for initialization
+      setTimeout(() => resolve(true), 500);
+    };
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
   });
@@ -577,7 +596,6 @@ const PaymentVerification = () => {
   const location = useLocation();
   const { clearCart } = useCart();
   
-  // State for payment method
   const [selectedMethod, setSelectedMethod] = useState('upi');
   const [screenshot, setScreenshot] = useState(null);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
@@ -594,29 +612,7 @@ const PaymentVerification = () => {
   const [loadingBankDetails, setLoadingBankDetails] = useState(false);
   const [copiedBankField, setCopiedBankField] = useState(null);
   const [timeElapsed, setTimeElapsed] = useState(0);
-  const [paymentMethods, setPaymentMethods] = useState([]);
 
-  // Fetch available payment methods
-  useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      try {
-        const response = await api.get('/api/payment/payment-methods');
-        if (response.data.success) {
-          setPaymentMethods(response.data.payment_methods);
-        }
-      } catch (error) {
-        console.error('Failed to fetch payment methods:', error);
-        setPaymentMethods([
-          { id: 'upi', name: 'UPI', description: 'Instant access', is_available: true },
-          { id: 'cashfree', name: 'Cards/NetBanking', description: 'Instant', is_available: true },
-          { id: 'bank_transfer', name: 'Bank Transfer', description: 'Manual', is_available: true }
-        ]);
-      }
-    };
-    fetchPaymentMethods();
-  }, []);
-
-  // Check if user is logged in and load order data
   useEffect(() => {
     const loadOrderData = async () => {
       const token = localStorage.getItem('token');
@@ -675,14 +671,12 @@ const PaymentVerification = () => {
     loadOrderData();
   }, [location.state, navigate]);
 
-  // Fetch bank details when bank transfer is selected
   useEffect(() => {
     if (selectedMethod === 'bank_transfer') {
       fetchBankDetails();
     }
   }, [selectedMethod]);
 
-  // Timer for pending status
   useEffect(() => {
     let interval;
     if (verificationStatus === 'pending') {
@@ -695,7 +689,6 @@ const PaymentVerification = () => {
     };
   }, [verificationStatus]);
 
-  // Auto-check status every 15 seconds
   useEffect(() => {
     let interval;
     if (verificationId && verificationStatus === 'pending') {
@@ -817,7 +810,6 @@ const PaymentVerification = () => {
     toast.success("QR Code downloaded!");
   };
 
-  // Cashfree Payment Handler
   const handleCashfreePayment = async () => {
     if (!orderData || orderData.isTemp) {
       toast.error('Please create a valid order');
@@ -826,56 +818,85 @@ const PaymentVerification = () => {
     }
 
     setSubmitting(true);
+    
     try {
+      // Get user details from localStorage
+      const userStr = localStorage.getItem('user');
+      let customerEmail = 'customer@example.com';
+      let customerPhone = '9999999999';
+      
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          customerEmail = user.email || customerEmail;
+          customerPhone = user.phone || customerPhone;
+        } catch (e) {}
+      }
+
+      console.log('Creating Cashfree order with:', {
+        amount: orderData.totalAmount,
+        customerEmail,
+        customerPhone
+      });
+
       const response = await api.post("/api/payment/create-cashfree-order", {
         amount: orderData.totalAmount,
         order_type: 'course',
-        courses: orderData.courses
+        courses: orderData.courses,
+        customer_email: customerEmail,
+        customer_phone: customerPhone
       });
 
-      if (response.data.success) {
+      console.log('Cashfree order response:', response.data);
+
+      if (response.data.success && response.data.payment_session_id) {
+        // Load Cashfree script
         const isLoaded = await loadCashfreeScript();
         if (!isLoaded) {
-          toast.error('Failed to load payment gateway');
+          toast.error('Failed to load payment gateway. Please try again.');
           setSubmitting(false);
           return;
         }
 
+        // Initialize Cashfree
         const cashfree = new window.Cashfree({
-          mode: "sandbox", // Change to "production" when live
-          paymentSessionId: response.data.payment_session_id
+          mode: "production" // Use "sandbox" for testing
         });
         
-        cashfree.checkout({
+        // Open checkout
+        const result = await cashfree.checkout({
           paymentSessionId: response.data.payment_session_id,
           redirectTarget: "_self"
-        }).then(async (result) => {
-          if (result.error) {
-            toast.error(result.error.message);
-          } else {
-            // Verify payment
-            const verifyRes = await api.post("/api/payment/verify-cashfree-payment", {
-              order_id: response.data.order_id
-            });
-            
-            if (verifyRes.data.success && verifyRes.data.status === 'PAID') {
-              toast.success("Payment successful!");
-              clearCart();
-              localStorage.removeItem('sjs_cart');
-              setTimeout(() => {
-                navigate("/my-courses");
-              }, 2000);
-            } else {
-              toast.error("Payment verification failed");
-            }
-          }
         });
+        
+        if (result && result.error) {
+          console.error('Cashfree checkout error:', result.error);
+          toast.error(result.error.message || 'Payment failed. Please try again.');
+        } else {
+          // Payment successful - verify on backend
+          const verifyRes = await api.post("/api/payment/verify-cashfree-payment", {
+            order_id: response.data.order_id
+          });
+          
+          if (verifyRes.data.success && verifyRes.data.status === 'PAID') {
+            toast.success("Payment successful! Redirecting to your courses...");
+            clearCart();
+            localStorage.removeItem('sjs_cart');
+            localStorage.removeItem('pendingOrder');
+            setTimeout(() => {
+              navigate("/my-courses");
+            }, 2000);
+          } else {
+            toast.error("Payment verification failed. Please contact support.");
+          }
+        }
       } else {
-        toast.error("Failed to create payment order");
+        toast.error(response.data.error || "Failed to create payment order");
       }
     } catch (error) {
       console.error("Cashfree error:", error);
-      toast.error(error.response?.data?.error || "Payment failed");
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || "Payment failed. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -1051,11 +1072,11 @@ const PaymentVerification = () => {
                 <FaMoneyBillWave className="text-primary-600" /> Order Summary
               </h3>
               <p className="text-sm text-gray-600 break-all">Order ID: {orderData.orderId}</p>
-              <p className="text-2xl font-bold text-primary-600 mt-2">Total: ₹{orderData.totalAmount?.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-primary-600 mt-2">Total: ₹{orderData.totalAmount?.toLocaleString('en-IN')}</p>
               {orderData.courses?.map((course, idx) => (
                 <div key={idx} className="flex justify-between text-sm mt-2">
                   <span>{course.name}</span>
-                  <span>₹{course.price?.toLocaleString()}</span>
+                  <span>₹{course.price?.toLocaleString('en-IN')}</span>
                 </div>
               ))}
             </div>
@@ -1064,29 +1085,44 @@ const PaymentVerification = () => {
             <div className="mb-6">
               <h3 className="font-semibold mb-3">Select Payment Method</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {/* UPI Option */}
-                <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'upi' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('upi')}>
+                <div 
+                  className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'upi' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} 
+                  onClick={() => setSelectedMethod('upi')}
+                >
                   <div className="flex items-center gap-2">
                     <FaMobileAlt className="text-blue-600 text-xl" />
-                    <div><p className="font-semibold text-sm">UPI</p><p className="text-xs text-gray-500">Instant</p></div>
+                    <div>
+                      <p className="font-semibold text-sm">UPI</p>
+                      <p className="text-xs text-gray-500">Instant</p>
+                    </div>
                     {selectedMethod === 'upi' && <FaCheckCircle className="text-primary-600 ml-auto" />}
                   </div>
                 </div>
 
-                {/* Cashfree Option */}
-                <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'cashfree' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('cashfree')}>
+                <div 
+                  className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'cashfree' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} 
+                  onClick={() => setSelectedMethod('cashfree')}
+                >
                   <div className="flex items-center gap-2">
                     <FaCreditCard className="text-purple-600 text-xl" />
-                    <div><p className="font-semibold text-sm">Card/NetBanking</p><p className="text-xs text-gray-500">Instant</p></div>
+                    <div>
+                      <p className="font-semibold text-sm">Card/NetBanking</p>
+                      <p className="text-xs text-gray-500">Instant</p>
+                    </div>
                     {selectedMethod === 'cashfree' && <FaCheckCircle className="text-primary-600 ml-auto" />}
                   </div>
                 </div>
 
-                {/* Bank Transfer Option */}
-                <div className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'bank_transfer' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} onClick={() => setSelectedMethod('bank_transfer')}>
+                <div 
+                  className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'bank_transfer' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} 
+                  onClick={() => setSelectedMethod('bank_transfer')}
+                >
                   <div className="flex items-center gap-2">
                     <FaUniversity className="text-orange-600 text-xl" />
-                    <div><p className="font-semibold text-sm">Bank Transfer</p><p className="text-xs text-gray-500">Manual</p></div>
+                    <div>
+                      <p className="font-semibold text-sm">Bank Transfer</p>
+                      <p className="text-xs text-gray-500">Manual</p>
+                    </div>
                     {selectedMethod === 'bank_transfer' && <FaCheckCircle className="text-primary-600 ml-auto" />}
                   </div>
                 </div>
@@ -1098,29 +1134,55 @@ const PaymentVerification = () => {
               <div className="space-y-4">
                 <div className="bg-white rounded-xl p-4 text-center border-2 border-dashed border-primary-200">
                   <p className="text-gray-600 mb-2">Scan QR code with any UPI app</p>
-                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(YOUR_UPI_ID)}`} alt="UPI QR Code" className="w-48 h-48 mx-auto" />
-                  <button onClick={handleDownloadQR} className="mt-2 text-primary-600 text-sm flex items-center gap-1 mx-auto"><FaDownload /> Download QR</button>
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(YOUR_UPI_ID)}`} 
+                    alt="UPI QR Code" 
+                    className="w-48 h-48 mx-auto" 
+                  />
+                  <button onClick={handleDownloadQR} className="mt-2 text-primary-600 text-sm flex items-center gap-1 mx-auto">
+                    <FaDownload /> Download QR
+                  </button>
                 </div>
                 <div className="bg-blue-50 rounded-xl p-4 text-center">
                   <p className="text-sm mb-2">Or pay using UPI ID:</p>
                   <code className="bg-white px-4 py-2 rounded-lg font-mono text-primary-600">{YOUR_UPI_ID}</code>
-                  <button onClick={handleCopyUPI} className="ml-2 text-xs bg-primary-600 text-white px-3 py-1 rounded">{copied ? 'Copied!' : 'Copy'}</button>
+                  <button onClick={handleCopyUPI} className="ml-2 text-xs bg-primary-600 text-white px-3 py-1 rounded">
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">Transaction ID *</label>
-                  <input type="text" value={transactionId} onChange={(e) => setTransactionId(e.target.value)} className="w-full px-4 py-2 border rounded-lg" placeholder="Enter transaction ID" />
+                  <input 
+                    type="text" 
+                    value={transactionId} 
+                    onChange={(e) => setTransactionId(e.target.value)} 
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Enter transaction ID" 
+                  />
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">Payment Screenshot *</label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     <FaUpload className="text-3xl text-gray-400 mx-auto mb-2" />
-                    <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="screenshot-upload" />
-                    <label htmlFor="screenshot-upload" className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block">Choose File</label>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleFileChange} 
+                      className="hidden" 
+                      id="screenshot-upload" 
+                    />
+                    <label htmlFor="screenshot-upload" className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block">
+                      Choose File
+                    </label>
                     {screenshot && <p className="text-sm text-green-600 mt-2">✓ {screenshot.name}</p>}
                     {screenshotPreview && <img src={screenshotPreview} alt="Preview" className="max-h-32 mx-auto mt-2 rounded" />}
                   </div>
                 </div>
-                <button onClick={handleManualPaymentSubmit} disabled={submitting || !transactionId || !screenshot} className="w-full bg-green-600 text-white py-3 rounded-lg font-bold disabled:opacity-50">
+                <button 
+                  onClick={handleManualPaymentSubmit} 
+                  disabled={submitting || !transactionId || !screenshot} 
+                  className="w-full bg-green-600 text-white py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   {submitting ? <FaSpinner className="animate-spin mx-auto" /> : 'Submit for Verification →'}
                 </button>
               </div>
@@ -1133,7 +1195,11 @@ const PaymentVerification = () => {
                   <p className="text-sm">Pay securely with Credit/Debit Card, NetBanking, or UPI</p>
                   <p className="text-xs text-gray-500 mt-2">Powered by Cashfree - Supports all Indian payment methods</p>
                 </div>
-                <button onClick={handleCashfreePayment} disabled={submitting} className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                <button 
+                  onClick={handleCashfreePayment} 
+                  disabled={submitting} 
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
                   {submitting ? <FaSpinner className="animate-spin" /> : <FaCreditCard />} Pay with Cashfree →
                 </button>
               </div>
@@ -1143,40 +1209,146 @@ const PaymentVerification = () => {
             {selectedMethod === 'bank_transfer' && (
               <div className="space-y-4">
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
-                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><FaBuilding className="text-primary-600" /> Bank Account Details</h3>
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                    <FaBuilding className="text-primary-600" /> Bank Account Details
+                  </h3>
                   {loadingBankDetails ? (
-                    <div className="text-center py-4"><FaSpinner className="animate-spin mx-auto" /><p className="text-sm mt-2">Loading...</p></div>
+                    <div className="text-center py-4">
+                      <FaSpinner className="animate-spin mx-auto" />
+                      <p className="text-sm mt-2">Loading...</p>
+                    </div>
                   ) : bankDetails ? (
                     <div className="space-y-3">
-                      <div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Account Holder Name</p><div className="flex justify-between"><p className="font-semibold">{bankDetails.account_name}</p><button onClick={() => handleCopyToClipboard(bankDetails.account_name, 'Account Name')}>{copiedBankField === 'Account Name' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>
-                      <div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Account Number</p><div className="flex justify-between"><p className="font-bold text-primary-600">{bankDetails.account_number}</p><button onClick={() => handleCopyToClipboard(bankDetails.account_number, 'Account Number')}>{copiedBankField === 'Account Number' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>
-                      <div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">IFSC Code</p><div className="flex justify-between"><p className="font-semibold">{bankDetails.ifsc_code}</p><button onClick={() => handleCopyToClipboard(bankDetails.ifsc_code, 'IFSC Code')}>{copiedBankField === 'IFSC Code' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>
-                      <div className="grid grid-cols-2 gap-3"><div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Bank Name</p><p className="text-sm font-semibold">{bankDetails.bank_name}</p></div><div className="bg-white rounded-lg p-3"><p className="text-xs text-gray-500">Branch</p><p className="text-sm font-semibold">{bankDetails.branch}</p></div></div>
-                      {bankDetails.upi_id && <div className="bg-white rounded-lg p-3 border border-green-200 bg-green-50"><p className="text-xs text-gray-500">UPI ID (Alternate)</p><div className="flex justify-between"><p className="font-semibold text-green-700">{bankDetails.upi_id}</p><button onClick={() => handleCopyToClipboard(bankDetails.upi_id, 'UPI ID')}>{copiedBankField === 'UPI ID' ? <FaCheckCircle /> : <FaCopyIcon />}</button></div></div>}
+                      <div className="bg-white rounded-lg p-3">
+                        <p className="text-xs text-gray-500">Account Holder Name</p>
+                        <div className="flex justify-between items-center">
+                          <p className="font-semibold">{bankDetails.account_name}</p>
+                          <button onClick={() => handleCopyToClipboard(bankDetails.account_name, 'Account Name')} className="text-primary-600">
+                            {copiedBankField === 'Account Name' ? <FaCheckCircle /> : <FaCopyIcon />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3">
+                        <p className="text-xs text-gray-500">Account Number</p>
+                        <div className="flex justify-between items-center">
+                          <p className="font-bold text-primary-600">{bankDetails.account_number}</p>
+                          <button onClick={() => handleCopyToClipboard(bankDetails.account_number, 'Account Number')} className="text-primary-600">
+                            {copiedBankField === 'Account Number' ? <FaCheckCircle /> : <FaCopyIcon />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3">
+                        <p className="text-xs text-gray-500">IFSC Code</p>
+                        <div className="flex justify-between items-center">
+                          <p className="font-semibold">{bankDetails.ifsc_code}</p>
+                          <button onClick={() => handleCopyToClipboard(bankDetails.ifsc_code, 'IFSC Code')} className="text-primary-600">
+                            {copiedBankField === 'IFSC Code' ? <FaCheckCircle /> : <FaCopyIcon />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white rounded-lg p-3">
+                          <p className="text-xs text-gray-500">Bank Name</p>
+                          <p className="text-sm font-semibold">{bankDetails.bank_name}</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3">
+                          <p className="text-xs text-gray-500">Branch</p>
+                          <p className="text-sm font-semibold">{bankDetails.branch}</p>
+                        </div>
+                      </div>
+                      {bankDetails.upi_id && (
+                        <div className="bg-white rounded-lg p-3 border border-green-200 bg-green-50">
+                          <p className="text-xs text-gray-500">UPI ID (Alternate)</p>
+                          <div className="flex justify-between items-center">
+                            <p className="font-semibold text-green-700">{bankDetails.upi_id}</p>
+                            <button onClick={() => handleCopyToClipboard(bankDetails.upi_id, 'UPI ID')} className="text-primary-600">
+                              {copiedBankField === 'UPI ID' ? <FaCheckCircle /> : <FaCopyIcon />}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ) : <div className="text-center py-4 text-red-500">Failed to load bank details</div>}
-                  <div className="mt-4 p-3 bg-yellow-50 rounded-lg"><p className="text-sm font-semibold mb-2">📝 Instructions:</p><ul className="text-xs space-y-1 list-disc list-inside"><li>Use the exact account number shown above</li><li>Include your Order ID in payment description</li><li>Upload screenshot below for verification</li></ul></div>
+                  ) : (
+                    <div className="text-center py-4 text-red-500">Failed to load bank details</div>
+                  )}
+                  <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+                    <p className="text-sm font-semibold mb-2">📝 Instructions:</p>
+                    <ul className="text-xs space-y-1 list-disc list-inside">
+                      <li>Use the exact account number shown above</li>
+                      <li>Include your Order ID in payment description</li>
+                      <li>Upload screenshot below for verification</li>
+                    </ul>
+                  </div>
                 </div>
-                <div><label className="block font-semibold mb-2">Transaction ID / UTR Number *</label><input type="text" value={transactionId} onChange={(e) => setTransactionId(e.target.value)} className="w-full px-4 py-2 border rounded-lg" placeholder="Enter transaction ID" /></div>
-                <div><label className="block font-semibold mb-2">Payment Screenshot *</label><div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center"><FaUpload className="text-3xl text-gray-400 mx-auto mb-2" /><input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="bank-screenshot" /><label htmlFor="bank-screenshot" className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block">Choose File</label>{screenshot && <p className="text-sm text-green-600 mt-2">✓ {screenshot.name}</p>}{screenshotPreview && <img src={screenshotPreview} alt="Preview" className="max-h-32 mx-auto mt-2 rounded" />}</div></div>
-                <button onClick={handleManualPaymentSubmit} disabled={submitting || !transactionId || !screenshot} className="w-full bg-orange-500 text-white py-3 rounded-lg font-bold disabled:opacity-50">{submitting ? <FaSpinner className="animate-spin mx-auto" /> : 'Submit for Verification →'}</button>
+                <div>
+                  <label className="block font-semibold mb-2">Transaction ID / UTR Number *</label>
+                  <input 
+                    type="text" 
+                    value={transactionId} 
+                    onChange={(e) => setTransactionId(e.target.value)} 
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Enter transaction ID" 
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-2">Payment Screenshot *</label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <FaUpload className="text-3xl text-gray-400 mx-auto mb-2" />
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleFileChange} 
+                      className="hidden" 
+                      id="bank-screenshot" 
+                    />
+                    <label htmlFor="bank-screenshot" className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block">
+                      Choose File
+                    </label>
+                    {screenshot && <p className="text-sm text-green-600 mt-2">✓ {screenshot.name}</p>}
+                    {screenshotPreview && <img src={screenshotPreview} alt="Preview" className="max-h-32 mx-auto mt-2 rounded" />}
+                  </div>
+                </div>
+                <button 
+                  onClick={handleManualPaymentSubmit} 
+                  disabled={submitting || !transactionId || !screenshot} 
+                  className="w-full bg-orange-500 text-white py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? <FaSpinner className="animate-spin mx-auto" /> : 'Submit for Verification →'}
+                </button>
               </div>
             )}
 
             {/* Pending Status Section */}
             {verificationStatus === 'pending' && (
               <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-2"><FaClock className="text-yellow-600" /><span className="font-semibold">Verification Pending ({formatElapsedTime})</span></div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FaClock className="text-yellow-600" />
+                  <span className="font-semibold">Verification Pending ({formatElapsedTime})</span>
+                </div>
                 <p className="text-sm text-gray-600">Your payment proof has been submitted. Our team will verify within 24 hours.</p>
-                <button onClick={handleManualCheck} disabled={checkingStatus} className="mt-3 text-primary-600 text-sm hover:underline flex items-center gap-1">{checkingStatus ? <FaSpinner className="animate-spin" /> : <FaEye />} Check Status</button>
+                <button 
+                  onClick={handleManualCheck} 
+                  disabled={checkingStatus} 
+                  className="mt-3 text-primary-600 text-sm hover:underline flex items-center gap-1"
+                >
+                  {checkingStatus ? <FaSpinner className="animate-spin" /> : <FaEye />} Check Status
+                </button>
               </div>
             )}
 
             {/* Support Section */}
             <div className="mt-6 pt-4 border-t">
               <div className="flex gap-3">
-                <a href={`https://wa.me/${YOUR_PHONE}`} target="_blank" rel="noopener noreferrer" className="flex-1"><button className="w-full flex items-center justify-center gap-2 border border-green-500 text-green-600 py-2 rounded-lg"><FaWhatsapp /> WhatsApp</button></a>
-                <a href="mailto:sjsglobaltech@gmail.com" className="flex-1"><button className="w-full flex items-center justify-center gap-2 border border-primary-500 text-primary-600 py-2 rounded-lg"><FaEnvelope /> Email</button></a>
+                <a href={`https://wa.me/${YOUR_PHONE}`} target="_blank" rel="noopener noreferrer" className="flex-1">
+                  <button className="w-full flex items-center justify-center gap-2 border border-green-500 text-green-600 py-2 rounded-lg hover:bg-green-50 transition">
+                    <FaWhatsapp /> WhatsApp
+                  </button>
+                </a>
+                <a href="mailto:sjsglobaltech@gmail.com" className="flex-1">
+                  <button className="w-full flex items-center justify-center gap-2 border border-primary-500 text-primary-600 py-2 rounded-lg hover:bg-primary-50 transition">
+                    <FaEnvelope /> Email
+                  </button>
+                </a>
               </div>
             </div>
           </div>
