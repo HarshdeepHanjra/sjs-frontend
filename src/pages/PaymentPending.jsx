@@ -70,22 +70,24 @@
 // export default PaymentPending;
 
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaClock, FaWhatsapp, FaEnvelope, FaCheckCircle, FaSpinner, FaEye, FaSync } from 'react-icons/fa';
+import { FaClock, FaWhatsapp, FaEnvelope, FaCheckCircle, FaSpinner, FaEye, FaSync, FaTrash } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { useCart } from '../context/CartContext';
 
 const PaymentPending = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { clearCart } = useCart(); // Import cart context
   const { orderId, totalAmount, courses, internshipId, internshipTitle, verificationId: initialVerificationId } = location.state || {};
   const [verificationStatus, setVerificationStatus] = useState('pending');
   const [verificationId, setVerificationId] = useState(initialVerificationId);
   const [adminNotes, setAdminNotes] = useState('');
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  const [cartCleared, setCartCleared] = useState(false);
   const intervalRef = useRef(null);
   const timeIntervalRef = useRef(null);
   const isInternship = !!internshipId;
@@ -118,7 +120,7 @@ const PaymentPending = () => {
     };
   }, []);
 
-  // Auto-check status every 15 seconds (more frequent)
+  // Auto-check status every 15 seconds
   useEffect(() => {
     if (verificationId && verificationStatus === 'pending') {
       // Initial check after 3 seconds
@@ -147,6 +149,22 @@ const PaymentPending = () => {
     return `${seconds}s`;
   };
 
+  const clearCartAndStorage = () => {
+    if (!cartCleared) {
+      // Clear cart using context
+      clearCart();
+      
+      // Clear localStorage
+      localStorage.removeItem('pendingVerification');
+      localStorage.removeItem('pendingOrder');
+      localStorage.removeItem('sjs_cart');
+      localStorage.removeItem('cart');
+      
+      setCartCleared(true);
+      console.log('✅ Cart and storage cleared successfully');
+    }
+  };
+
   const checkStatus = async () => {
     if (!verificationId) {
       console.log('No verification ID to check');
@@ -169,15 +187,13 @@ const PaymentPending = () => {
           setAdminNotes(response.data.admin_notes || '');
           
           if (newStatus === 'approved') {
+            // Clear cart and storage immediately on approval
+            clearCartAndStorage();
+            
             toast.success('✅ Payment verified! Your account has been activated.', {
               duration: 5000,
               icon: '🎉'
             });
-            
-            // Clear pending data
-            localStorage.removeItem('pendingVerification');
-            localStorage.removeItem('pendingOrder');
-            localStorage.removeItem('sjs_cart');
             
             // Clear intervals
             if (intervalRef.current) clearInterval(intervalRef.current);
@@ -219,6 +235,12 @@ const PaymentPending = () => {
     setTimeout(() => {
       toast.dismiss('status-check');
     }, 2000);
+  };
+
+  // Force clear cart manually (for debugging)
+  const handleForceClearCart = () => {
+    clearCartAndStorage();
+    toast.success('Cart cleared successfully!');
   };
 
   // Approved status view
@@ -330,6 +352,11 @@ const PaymentPending = () => {
               <div className="bg-gray-50 rounded-xl p-4 mb-6">
                 <p className="font-semibold mb-3 flex items-center gap-2">
                   <span>📋 Order Summary</span>
+                  {cartCleared && (
+                    <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full flex items-center gap-1">
+                      <FaCheckCircle className="text-xs" /> Cart Cleared
+                    </span>
+                  )}
                 </p>
                 {isInternship ? (
                   <div className="flex justify-between text-sm mb-2">
@@ -403,6 +430,13 @@ const PaymentPending = () => {
                     <span className="text-xs text-green-600 ml-auto">✓ Complete</span>
                   )}
                 </div>
+                <div className={`flex items-center gap-2 ${cartCleared ? 'text-green-600' : 'text-gray-400'}`}>
+                  {cartCleared ? <FaCheckCircle className="text-xs" /> : <div className="w-3 h-3" />}
+                  <span>Cart cleared</span>
+                  {cartCleared && (
+                    <span className="text-xs text-green-600 ml-auto">✓ Complete</span>
+                  )}
+                </div>
               </div>
             </div>
             
@@ -418,6 +452,15 @@ const PaymentPending = () => {
                   {checkingStatus ? 'Checking Status...' : 'Check Status Now'}
                 </button>
               )}
+              
+              {/* Force Clear Cart Button (Hidden normally, visible for debugging) */}
+              <button
+                onClick={handleForceClearCart}
+                className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition text-sm opacity-50 hover:opacity-100"
+                title="Force clear cart (if payment stuck)"
+              >
+                <FaTrash /> Clear Cart (if stuck)
+              </button>
               
               <a href="https://wa.me/918950026639" target="_blank" rel="noopener noreferrer">
                 <button className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition">
@@ -438,6 +481,10 @@ const PaymentPending = () => {
                 💡 You can close this page. We'll send you an email once verified.
                 <br />
                 Status auto-checks every 15 seconds while this page is open.
+                <br />
+                {!cartCleared && (
+                  <span className="text-yellow-600">⚠️ Cart will be cleared automatically after admin approval.</span>
+                )}
               </p>
             </div>
           </div>
