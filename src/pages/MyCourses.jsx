@@ -420,28 +420,63 @@ const MyCourses = () => {
     totalSpent: 0,
   });
 
-  // ✅ Fixed WhatsApp Group Link (only the group ID)
+  // ✅ WhatsApp Group Link - Fixed
   const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/FmIIVkekb68LZV0rbKW8VN";
   const WHATSAPP_NUMBER = "919468088336";
 
-  // ✅ Function to handle Join WhatsApp Group
+  // ✅ Function to handle Join WhatsApp Group - Using window.location
   const handleJoinWhatsApp = () => {
-    try {
-      window.open(WHATSAPP_GROUP_LINK, '_blank');
-    } catch (error) {
-      console.error("Error opening WhatsApp:", error);
-      toast.error("Unable to open WhatsApp. Please try again.");
-    }
+    console.log("Join WhatsApp clicked");
+    console.log("Link:", WHATSAPP_GROUP_LINK);
+    
+    // ✅ Method 1: Using window.location (Most reliable)
+    window.location.href = WHATSAPP_GROUP_LINK;
+    
+    // ✅ Method 2: Using window.open (Alternative)
+    // window.open(WHATSAPP_GROUP_LINK, '_blank');
   };
 
-  // ✅ Function to handle Contact Admin
+  // ✅ Function to handle Contact Admin - Using window.location
   const handleContactAdmin = () => {
-    try {
-      const message = "Hi Team, I want to join the SJS Academy WhatsApp group. Please add me.";
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
-    } catch (error) {
-      console.error("Error opening WhatsApp:", error);
-      toast.error("Unable to open WhatsApp. Please try again.");
+    console.log("Contact Admin clicked");
+    const message = encodeURIComponent("Hi Team, I want to join the SJS Academy WhatsApp group. Please add me.");
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+    console.log("WhatsApp URL:", url);
+    
+    // ✅ Method 1: Using window.location (Most reliable)
+    window.location.href = url;
+    
+    // ✅ Method 2: Using window.open (Alternative)
+    // window.open(url, '_blank');
+  };
+
+  // ✅ Alternative: Using anchor tag with download attribute
+  const WhatsAppButton = ({ type }) => {
+    if (type === 'join') {
+      return (
+        <a 
+          href={WHATSAPP_GROUP_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 text-xs bg-green-500 hover:bg-green-600 text-white px-2.5 py-1.5 rounded flex items-center justify-center gap-1 transition"
+        >
+          <FaWhatsapp size={12} />
+          Join Group
+        </a>
+      );
+    } else {
+      const message = encodeURIComponent("Hi Team, I want to join the SJS Academy WhatsApp group. Please add me.");
+      return (
+        <a 
+          href={`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 text-xs bg-blue-500 hover:bg-blue-600 text-white px-2.5 py-1.5 rounded flex items-center justify-center gap-1 transition"
+        >
+          <FaWhatsapp size={12} />
+          Contact Admin
+        </a>
+      );
     }
   };
 
@@ -630,13 +665,15 @@ const MyCourses = () => {
             </div>
             <div className="flex items-center gap-3">
               {/* ✅ WhatsApp Join Group Button - Header */}
-              <button
-                onClick={handleJoinWhatsApp}
+              <a
+                href={WHATSAPP_GROUP_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
               >
                 <FaWhatsapp size={16} />
                 Join Group
-              </button>
+              </a>
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
@@ -693,13 +730,15 @@ const MyCourses = () => {
                   </button>
                 </Link>
                 {/* ✅ WhatsApp Group Button in Empty State */}
-                <button
-                  onClick={handleJoinWhatsApp}
+                <a
+                  href={WHATSAPP_GROUP_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                 >
                   <FaWhatsapp size={18} />
                   Join WhatsApp Group
-                </button>
+                </a>
               </div>
             </div>
           ) : (
@@ -732,22 +771,26 @@ const MyCourses = () => {
                         </div>
                       </div>
 
-                      {/* ✅ WhatsApp Group & Contact Buttons */}
+                      {/* ✅ WhatsApp Group & Contact Buttons - Using <a> tags */}
                       <div className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-100">
-                        <button 
-                          onClick={handleJoinWhatsApp}
+                        <a
+                          href={WHATSAPP_GROUP_LINK}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="flex-1 text-xs bg-green-500 hover:bg-green-600 text-white px-2.5 py-1.5 rounded flex items-center justify-center gap-1 transition"
                         >
                           <FaWhatsapp size={12} />
                           Join Group
-                        </button>
-                        <button 
-                          onClick={handleContactAdmin}
+                        </a>
+                        <a
+                          href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Team, I want to join the SJS Academy WhatsApp group. Please add me.")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="flex-1 text-xs bg-blue-500 hover:bg-blue-600 text-white px-2.5 py-1.5 rounded flex items-center justify-center gap-1 transition"
                         >
                           <FaWhatsapp size={12} />
                           Contact Admin
-                        </button>
+                        </a>
                       </div>
 
                       {course.enrolled_at && (
@@ -775,21 +818,25 @@ const MyCourses = () => {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <button 
-                    onClick={handleJoinWhatsApp}
+                  <a
+                    href={WHATSAPP_GROUP_LINK}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg transition flex items-center justify-center gap-2 font-medium"
                   >
                     <FaWhatsapp size={18} />
                     Join WhatsApp Group
-                  </button>
+                  </a>
                   
-                  <button 
-                    onClick={handleContactAdmin}
+                  <a
+                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Team, I want to join the SJS Academy WhatsApp group. Please add me.")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex-1 bg-white border border-green-500 text-green-600 hover:bg-green-50 py-2.5 rounded-lg transition flex items-center justify-center gap-2 text-sm font-medium"
                   >
                     <FaWhatsapp size={16} />
                     Contact Admin to Add
-                  </button>
+                  </a>
                 </div>
                 
                 <p className="text-xs text-gray-400 mt-3 text-center">
