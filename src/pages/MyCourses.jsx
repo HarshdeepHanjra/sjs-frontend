@@ -13,7 +13,7 @@ import {
 } from "react-icons/fa";
 import api from "../services/api";
 import toast from "react-hot-toast";
-import { FaWhatsapp, FaArrowRight, FaStar } from "react-icons/fa";
+import { FaWhatsapp} from "react-icons/fa";
 
 const MyCourses = () => {
   const navigate = useNavigate();
