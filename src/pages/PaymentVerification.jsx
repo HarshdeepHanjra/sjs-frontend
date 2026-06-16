@@ -561,7 +561,7 @@ import toast from 'react-hot-toast';
 import api from '../services/api';
 import { useCart } from '../context/CartContext';
 
-const YOUR_UPI_ID = "sjsacademy@okhdfcbank";
+const YOUR_UPI_ID = "gurmeetsingh1021981-1@okaxis";
 const YOUR_PAYPAL_EMAIL = "sjsglobaltech@gmail.com";
 const YOUR_PHONE = "918950026639";
 
@@ -960,7 +960,10 @@ const PaymentVerification = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8 sm:py-16">
       <div className="container mx-auto px-4 max-w-2xl">
-        <button onClick={() => navigate('/cart')} className="flex items-center gap-2 text-primary-600 mb-6 hover:underline">
+        <button
+          onClick={() => navigate("/cart")}
+          className="flex items-center gap-2 text-primary-600 mb-6 hover:underline"
+        >
           <FaArrowLeft /> Back to Cart
         </button>
 
@@ -976,12 +979,16 @@ const PaymentVerification = () => {
               <h3 className="font-semibold mb-2 flex items-center gap-2">
                 <FaBuilding className="text-primary-600" /> Order Summary
               </h3>
-              <p className="text-sm text-gray-600 break-all">Order ID: {orderData.orderId}</p>
-              <p className="text-2xl font-bold text-primary-600 mt-2">Total: ₹{orderData.totalAmount?.toLocaleString('en-IN')}</p>
+              <p className="text-sm text-gray-600 break-all">
+                Order ID: {orderData.orderId}
+              </p>
+              <p className="text-2xl font-bold text-primary-600 mt-2">
+                Total: ₹{orderData.totalAmount?.toLocaleString("en-IN")}
+              </p>
               {orderData.courses?.map((course, idx) => (
                 <div key={idx} className="flex justify-between text-sm mt-2">
                   <span>{course.name}</span>
-                  <span>₹{course.price?.toLocaleString('en-IN')}</span>
+                  <span>₹{course.price?.toLocaleString("en-IN")}</span>
                 </div>
               ))}
             </div>
@@ -991,113 +998,155 @@ const PaymentVerification = () => {
               <h3 className="font-semibold mb-3">Select Payment Method</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* UPI Option */}
-                <div 
-                  className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'upi' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} 
-                  onClick={() => setSelectedMethod('upi')}
+                <div
+                  className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === "upi" ? "border-primary-500 bg-primary-50" : "border-gray-200"}`}
+                  onClick={() => setSelectedMethod("upi")}
                 >
                   <div className="flex items-center gap-2">
                     <FaMobileAlt className="text-blue-600 text-xl" />
                     <div>
                       <p className="font-semibold text-sm">UPI</p>
-                      <p className="text-xs text-gray-500">Google Pay, PhonePe, Paytm</p>
+                      <p className="text-xs text-gray-500">
+                        Google Pay, PhonePe, Paytm
+                      </p>
                     </div>
-                    {selectedMethod === 'upi' && <FaCheckCircle className="text-primary-600 ml-auto" />}
+                    {selectedMethod === "upi" && (
+                      <FaCheckCircle className="text-primary-600 ml-auto" />
+                    )}
                   </div>
                 </div>
 
                 {/* PayPal Option */}
-                <div 
-                  className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'paypal' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} 
-                  onClick={() => setSelectedMethod('paypal')}
+                <div
+                  className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === "paypal" ? "border-primary-500 bg-primary-50" : "border-gray-200"}`}
+                  onClick={() => setSelectedMethod("paypal")}
                 >
                   <div className="flex items-center gap-2">
                     <FaPaypal className="text-blue-600 text-xl" />
                     <div>
                       <p className="font-semibold text-sm">PayPal</p>
-                      <p className="text-xs text-gray-500">International Payments</p>
+                      <p className="text-xs text-gray-500">
+                        International Payments
+                      </p>
                     </div>
-                    {selectedMethod === 'paypal' && <FaCheckCircle className="text-primary-600 ml-auto" />}
+                    {selectedMethod === "paypal" && (
+                      <FaCheckCircle className="text-primary-600 ml-auto" />
+                    )}
                   </div>
                 </div>
 
                 {/* Bank Transfer Option */}
-                <div 
-                  className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === 'bank_transfer' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}`} 
-                  onClick={() => setSelectedMethod('bank_transfer')}
+                <div
+                  className={`border rounded-lg p-3 cursor-pointer transition ${selectedMethod === "bank_transfer" ? "border-primary-500 bg-primary-50" : "border-gray-200"}`}
+                  onClick={() => setSelectedMethod("bank_transfer")}
                 >
                   <div className="flex items-center gap-2">
                     <FaUniversity className="text-orange-600 text-xl" />
                     <div>
                       <p className="font-semibold text-sm">Bank Transfer</p>
-                      <p className="text-xs text-gray-500">NEFT / RTGS / IMPS</p>
+                      <p className="text-xs text-gray-500">
+                        NEFT / RTGS / IMPS
+                      </p>
                     </div>
-                    {selectedMethod === 'bank_transfer' && <FaCheckCircle className="text-primary-600 ml-auto" />}
+                    {selectedMethod === "bank_transfer" && (
+                      <FaCheckCircle className="text-primary-600 ml-auto" />
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
             {/* UPI Section */}
-            {selectedMethod === 'upi' && (
+            {selectedMethod === "upi" && (
               <div className="space-y-4">
                 <div className="bg-white rounded-xl p-4 text-center border-2 border-dashed border-primary-200">
-                  <p className="text-gray-600 mb-2">Scan QR code with any UPI app</p>
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(YOUR_UPI_ID)}`} 
-                    alt="UPI QR Code" 
-                    className="w-48 h-48 mx-auto" 
+                  <p className="text-gray-600 mb-2">
+                    Scan QR code with any UPI app
+                  </p>
+                  <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=gurmeetsingh1021981-1@okaxis&pn=SJS%20Global%20Tech&cu=INR"
+                    alt="UPI QR Code"
                   />
-                  <button onClick={handleDownloadQR} className="mt-2 text-primary-600 text-sm flex items-center gap-1 mx-auto">
+                  <button
+                    onClick={handleDownloadQR}
+                    className="mt-2 text-primary-600 text-sm flex items-center gap-1 mx-auto"
+                  >
                     <FaDownload /> Download QR
                   </button>
                 </div>
                 <div className="bg-blue-50 rounded-xl p-4 text-center">
                   <p className="text-sm mb-2">Or pay using UPI ID:</p>
-                  <code className="bg-white px-4 py-2 rounded-lg font-mono text-primary-600">{YOUR_UPI_ID}</code>
-                  <button onClick={handleCopyUPI} className="ml-2 text-xs bg-primary-600 text-white px-3 py-1 rounded">
-                    {copiedUPI ? 'Copied!' : 'Copy'}
+                  <code className="bg-white px-4 py-2 rounded-lg font-mono text-primary-600">
+                    {YOUR_UPI_ID}
+                  </code>
+                  <button
+                    onClick={handleCopyUPI}
+                    className="ml-2 text-xs bg-primary-600 text-white px-3 py-1 rounded"
+                  >
+                    {copiedUPI ? "Copied!" : "Copy"}
                   </button>
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Transaction ID / UTR Number *</label>
-                  <input 
-                    type="text" 
-                    value={transactionId} 
-                    onChange={(e) => setTransactionId(e.target.value)} 
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Transaction ID / UTR Number *
+                  </label>
+                  <input
+                    type="text"
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
-                    placeholder="Enter transaction ID from your UPI app" 
+                    placeholder="Enter transaction ID from your UPI app"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Payment Screenshot *</label>
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Payment Screenshot *
+                  </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     <FaUpload className="text-3xl text-gray-400 mx-auto mb-2" />
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleFileChange} 
-                      className="hidden" 
-                      id="upi-screenshot" 
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="upi-screenshot"
                     />
-                    <label htmlFor="upi-screenshot" className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block">
+                    <label
+                      htmlFor="upi-screenshot"
+                      className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block"
+                    >
                       Choose File
                     </label>
-                    {screenshot && <p className="text-sm text-green-600 mt-2">✓ {screenshot.name}</p>}
-                    {screenshotPreview && <img src={screenshotPreview} alt="Preview" className="max-h-32 mx-auto mt-2 rounded" />}
+                    {screenshot && (
+                      <p className="text-sm text-green-600 mt-2">
+                        ✓ {screenshot.name}
+                      </p>
+                    )}
+                    {screenshotPreview && (
+                      <img
+                        src={screenshotPreview}
+                        alt="Preview"
+                        className="max-h-32 mx-auto mt-2 rounded"
+                      />
+                    )}
                   </div>
                 </div>
-                <button 
-                  onClick={handleManualPaymentSubmit} 
-                  disabled={submitting || !transactionId || !screenshot} 
+                <button
+                  onClick={handleManualPaymentSubmit}
+                  disabled={submitting || !transactionId || !screenshot}
                   className="w-full bg-green-600 text-white py-3 rounded-lg font-bold disabled:opacity-50"
                 >
-                  {submitting ? <FaSpinner className="animate-spin mx-auto" /> : 'Submit for Verification →'}
+                  {submitting ? (
+                    <FaSpinner className="animate-spin mx-auto" />
+                  ) : (
+                    "Submit for Verification →"
+                  )}
                 </button>
               </div>
             )}
 
             {/* PayPal Section */}
-            {selectedMethod === 'paypal' && (
+            {selectedMethod === "paypal" && (
               <div className="space-y-4">
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
                   <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
@@ -1105,130 +1154,231 @@ const PaymentVerification = () => {
                   </h3>
                   <div className="space-y-3">
                     <div className="bg-white rounded-lg p-3 text-center">
-                      <p className="text-xs text-gray-500 mb-1">Send payment to:</p>
-                      <code className="font-mono text-primary-600 font-bold">{YOUR_PAYPAL_EMAIL}</code>
-                      <button onClick={handleCopyPaypal} className="ml-2 text-xs bg-primary-600 text-white px-2 py-1 rounded">
-                        {copiedPaypal ? 'Copied!' : 'Copy'}
+                      <p className="text-xs text-gray-500 mb-1">
+                        Send payment to:
+                      </p>
+                      <code className="font-mono text-primary-600 font-bold">
+                        {YOUR_PAYPAL_EMAIL}
+                      </code>
+                      <button
+                        onClick={handleCopyPaypal}
+                        className="ml-2 text-xs bg-primary-600 text-white px-2 py-1 rounded"
+                      >
+                        {copiedPaypal ? "Copied!" : "Copy"}
                       </button>
                     </div>
-                    
-                    <button 
+
+                    <button
                       onClick={handlePaypalPayment}
                       className="w-full bg-[#0070ba] hover:bg-[#003087] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2"
                     >
                       <FaPaypal /> Pay with PayPal →
                     </button>
-                    
+
                     <div className="bg-yellow-50 p-3 rounded-lg mt-3">
                       <p className="text-xs text-yellow-800">
-                        <strong>Note:</strong> After PayPal payment, please enter the Transaction ID and upload screenshot below.
+                        <strong>Note:</strong> After PayPal payment, please
+                        enter the Transaction ID and upload screenshot below.
                       </p>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">PayPal Transaction ID *</label>
-                  <input 
-                    type="text" 
-                    value={transactionId} 
-                    onChange={(e) => setTransactionId(e.target.value)} 
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    PayPal Transaction ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
                     className="w-full px-4 py-2 border rounded-lg"
-                    placeholder="Enter PayPal transaction ID" 
+                    placeholder="Enter PayPal transaction ID"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Payment Screenshot *</label>
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Payment Screenshot *
+                  </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     <FaUpload className="text-3xl text-gray-400 mx-auto mb-2" />
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleFileChange} 
-                      className="hidden" 
-                      id="paypal-screenshot" 
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="paypal-screenshot"
                     />
-                    <label htmlFor="paypal-screenshot" className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block">
+                    <label
+                      htmlFor="paypal-screenshot"
+                      className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block"
+                    >
                       Choose File
                     </label>
-                    {screenshot && <p className="text-sm text-green-600 mt-2">✓ {screenshot.name}</p>}
-                    {screenshotPreview && <img src={screenshotPreview} alt="Preview" className="max-h-32 mx-auto mt-2 rounded" />}
+                    {screenshot && (
+                      <p className="text-sm text-green-600 mt-2">
+                        ✓ {screenshot.name}
+                      </p>
+                    )}
+                    {screenshotPreview && (
+                      <img
+                        src={screenshotPreview}
+                        alt="Preview"
+                        className="max-h-32 mx-auto mt-2 rounded"
+                      />
+                    )}
                   </div>
                 </div>
-                <button 
-                  onClick={handleManualPaymentSubmit} 
-                  disabled={submitting || !transactionId || !screenshot} 
+                <button
+                  onClick={handleManualPaymentSubmit}
+                  disabled={submitting || !transactionId || !screenshot}
                   className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold disabled:opacity-50"
                 >
-                  {submitting ? <FaSpinner className="animate-spin mx-auto" /> : 'Submit for Verification →'}
+                  {submitting ? (
+                    <FaSpinner className="animate-spin mx-auto" />
+                  ) : (
+                    "Submit for Verification →"
+                  )}
                 </button>
               </div>
             )}
 
             {/* Bank Transfer Section */}
-            {selectedMethod === 'bank_transfer' && (
+            {selectedMethod === "bank_transfer" && (
               <div className="space-y-4">
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
                   <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    <FaBuilding className="text-primary-600" /> Bank Account Details
+                    <FaBuilding className="text-primary-600" /> Bank Account
+                    Details
                   </h3>
                   {loadingBankDetails ? (
-                    <div className="text-center py-4"><FaSpinner className="animate-spin mx-auto" /><p className="text-sm mt-2">Loading...</p></div>
+                    <div className="text-center py-4">
+                      <FaSpinner className="animate-spin mx-auto" />
+                      <p className="text-sm mt-2">Loading...</p>
+                    </div>
                   ) : bankDetails ? (
                     <div className="space-y-3">
                       <div className="bg-white rounded-lg p-3">
-                        <p className="text-xs text-gray-500">Account Holder Name</p>
+                        <p className="text-xs text-gray-500">
+                          Account Holder Name
+                        </p>
                         <div className="flex justify-between items-center">
-                          <p className="font-semibold">{bankDetails.account_name}</p>
-                          <button onClick={() => handleCopyBankField(bankDetails.account_name, 'Account Name')} className="text-primary-600">
-                            {selectedBankField === 'Account Name' ? <FaCheckCircle /> : <FaCopy />}
+                          <p className="font-semibold">
+                            {bankDetails.account_name}
+                          </p>
+                          <button
+                            onClick={() =>
+                              handleCopyBankField(
+                                bankDetails.account_name,
+                                "Account Name",
+                              )
+                            }
+                            className="text-primary-600"
+                          >
+                            {selectedBankField === "Account Name" ? (
+                              <FaCheckCircle />
+                            ) : (
+                              <FaCopy />
+                            )}
                           </button>
                         </div>
                       </div>
                       <div className="bg-white rounded-lg p-3">
                         <p className="text-xs text-gray-500">Account Number</p>
                         <div className="flex justify-between items-center">
-                          <p className="font-bold text-primary-600">{bankDetails.account_number}</p>
-                          <button onClick={() => handleCopyBankField(bankDetails.account_number, 'Account Number')} className="text-primary-600">
-                            {selectedBankField === 'Account Number' ? <FaCheckCircle /> : <FaCopy />}
+                          <p className="font-bold text-primary-600">
+                            {bankDetails.account_number}
+                          </p>
+                          <button
+                            onClick={() =>
+                              handleCopyBankField(
+                                bankDetails.account_number,
+                                "Account Number",
+                              )
+                            }
+                            className="text-primary-600"
+                          >
+                            {selectedBankField === "Account Number" ? (
+                              <FaCheckCircle />
+                            ) : (
+                              <FaCopy />
+                            )}
                           </button>
                         </div>
                       </div>
                       <div className="bg-white rounded-lg p-3">
                         <p className="text-xs text-gray-500">IFSC Code</p>
                         <div className="flex justify-between items-center">
-                          <p className="font-semibold">{bankDetails.ifsc_code}</p>
-                          <button onClick={() => handleCopyBankField(bankDetails.ifsc_code, 'IFSC Code')} className="text-primary-600">
-                            {selectedBankField === 'IFSC Code' ? <FaCheckCircle /> : <FaCopy />}
+                          <p className="font-semibold">
+                            {bankDetails.ifsc_code}
+                          </p>
+                          <button
+                            onClick={() =>
+                              handleCopyBankField(
+                                bankDetails.ifsc_code,
+                                "IFSC Code",
+                              )
+                            }
+                            className="text-primary-600"
+                          >
+                            {selectedBankField === "IFSC Code" ? (
+                              <FaCheckCircle />
+                            ) : (
+                              <FaCopy />
+                            )}
                           </button>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white rounded-lg p-3">
                           <p className="text-xs text-gray-500">Bank Name</p>
-                          <p className="text-sm font-semibold">{bankDetails.bank_name}</p>
+                          <p className="text-sm font-semibold">
+                            {bankDetails.bank_name}
+                          </p>
                         </div>
                         <div className="bg-white rounded-lg p-3">
                           <p className="text-xs text-gray-500">Branch</p>
-                          <p className="text-sm font-semibold">{bankDetails.branch}</p>
+                          <p className="text-sm font-semibold">
+                            {bankDetails.branch}
+                          </p>
                         </div>
                       </div>
                       {bankDetails.upi_id && (
                         <div className="bg-white rounded-lg p-3 border border-green-200 bg-green-50">
-                          <p className="text-xs text-gray-500">UPI ID (Alternate)</p>
+                          <p className="text-xs text-gray-500">
+                            UPI ID (Alternate)
+                          </p>
                           <div className="flex justify-between items-center">
-                            <p className="font-semibold text-green-700">{bankDetails.upi_id}</p>
-                            <button onClick={() => handleCopyBankField(bankDetails.upi_id, 'UPI ID')} className="text-primary-600">
-                              {selectedBankField === 'UPI ID' ? <FaCheckCircle /> : <FaCopy />}
+                            <p className="font-semibold text-green-700">
+                              {bankDetails.upi_id}
+                            </p>
+                            <button
+                              onClick={() =>
+                                handleCopyBankField(
+                                  bankDetails.upi_id,
+                                  "UPI ID",
+                                )
+                              }
+                              className="text-primary-600"
+                            >
+                              {selectedBankField === "UPI ID" ? (
+                                <FaCheckCircle />
+                              ) : (
+                                <FaCopy />
+                              )}
                             </button>
                           </div>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-red-500">Failed to load bank details</div>
+                    <div className="text-center py-4 text-red-500">
+                      Failed to load bank details
+                    </div>
                   )}
                   <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
-                    <p className="text-sm font-semibold mb-2">📝 Instructions:</p>
+                    <p className="text-sm font-semibold mb-2">
+                      📝 Instructions:
+                    </p>
                     <ul className="text-xs space-y-1 list-disc list-inside">
                       <li>Use the exact account number shown above</li>
                       <li>Include your Order ID in payment description</li>
@@ -1237,66 +1387,104 @@ const PaymentVerification = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block font-semibold mb-2">Transaction ID / UTR Number *</label>
-                  <input 
-                    type="text" 
-                    value={transactionId} 
-                    onChange={(e) => setTransactionId(e.target.value)} 
+                  <label className="block font-semibold mb-2">
+                    Transaction ID / UTR Number *
+                  </label>
+                  <input
+                    type="text"
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
                     className="w-full px-4 py-2 border rounded-lg"
-                    placeholder="Enter bank transaction reference number" 
+                    placeholder="Enter bank transaction reference number"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-2">Payment Screenshot *</label>
+                  <label className="block font-semibold mb-2">
+                    Payment Screenshot *
+                  </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     <FaUpload className="text-3xl text-gray-400 mx-auto mb-2" />
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleFileChange} 
-                      className="hidden" 
-                      id="bank-screenshot" 
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="bank-screenshot"
                     />
-                    <label htmlFor="bank-screenshot" className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block">
+                    <label
+                      htmlFor="bank-screenshot"
+                      className="bg-primary-600 text-white px-4 py-2 rounded-lg cursor-pointer inline-block"
+                    >
                       Choose File
                     </label>
-                    {screenshot && <p className="text-sm text-green-600 mt-2">✓ {screenshot.name}</p>}
-                    {screenshotPreview && <img src={screenshotPreview} alt="Preview" className="max-h-32 mx-auto mt-2 rounded" />}
+                    {screenshot && (
+                      <p className="text-sm text-green-600 mt-2">
+                        ✓ {screenshot.name}
+                      </p>
+                    )}
+                    {screenshotPreview && (
+                      <img
+                        src={screenshotPreview}
+                        alt="Preview"
+                        className="max-h-32 mx-auto mt-2 rounded"
+                      />
+                    )}
                   </div>
                 </div>
-                <button 
-                  onClick={handleManualPaymentSubmit} 
-                  disabled={submitting || !transactionId || !screenshot} 
+                <button
+                  onClick={handleManualPaymentSubmit}
+                  disabled={submitting || !transactionId || !screenshot}
                   className="w-full bg-orange-500 text-white py-3 rounded-lg font-bold disabled:opacity-50"
                 >
-                  {submitting ? <FaSpinner className="animate-spin mx-auto" /> : 'Submit for Verification →'}
+                  {submitting ? (
+                    <FaSpinner className="animate-spin mx-auto" />
+                  ) : (
+                    "Submit for Verification →"
+                  )}
                 </button>
               </div>
             )}
 
             {/* Pending Status Section */}
-            {verificationStatus === 'pending' && (
+            {verificationStatus === "pending" && (
               <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <FaClock className="text-yellow-600" />
-                  <span className="font-semibold">Verification Pending ({formatElapsedTime})</span>
+                  <span className="font-semibold">
+                    Verification Pending ({formatElapsedTime})
+                  </span>
                 </div>
-                <p className="text-sm text-gray-600">Your payment proof has been submitted. Our team will verify within 24 hours.</p>
-                <button 
-                  onClick={handleManualCheck} 
-                  disabled={checkingStatus} 
+                <p className="text-sm text-gray-600">
+                  Your payment proof has been submitted. Our team will verify
+                  within 24 hours.
+                </p>
+                <button
+                  onClick={handleManualCheck}
+                  disabled={checkingStatus}
                   className="mt-3 text-primary-600 text-sm hover:underline flex items-center gap-1"
                 >
-                  {checkingStatus ? <FaSpinner className="animate-spin" /> : <FaEye />} Check Status
+                  {checkingStatus ? (
+                    <FaSpinner className="animate-spin" />
+                  ) : (
+                    <FaEye />
+                  )}{" "}
+                  Check Status
                 </button>
               </div>
             )}
 
             {/* Support Section */}
             <div className="mt-6 pt-4 border-t">
-              <p className="text-sm text-gray-500 text-center mb-3">Need help with payment?</p>
+              <p className="text-sm text-gray-500 text-center mb-3">
+                Need help with payment?
+              </p>
               <div className="flex gap-3">
-                <a href={`https://wa.me/${YOUR_PHONE}`} target="_blank" rel="noopener noreferrer" className="flex-1">
+                <a
+                  href={`https://wa.me/${YOUR_PHONE}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
+                >
                   <button className="w-full flex items-center justify-center gap-2 border border-green-500 text-green-600 py-2 rounded-lg hover:bg-green-50">
                     <FaWhatsapp /> WhatsApp
                   </button>
