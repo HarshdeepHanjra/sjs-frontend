@@ -665,7 +665,7 @@ const MyCourses = () => {
             </div>
             <div className="flex items-center gap-3">
               {/* ✅ WhatsApp Join Group Button - Header */}
-              <a
+              {/* <a
                 href={WHATSAPP_GROUP_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -673,7 +673,7 @@ const MyCourses = () => {
               >
                 <FaWhatsapp size={16} />
                 Join Group
-              </a>
+              </a> */}
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
@@ -803,7 +803,7 @@ const MyCourses = () => {
                 ))}
               </div>
 
-              {/* ✅ WhatsApp Community Section - Full Width */}
+              {/* ✅ WhatsApp Community Section - Full Width
               <div className="mt-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
                 <div className="flex items-center gap-3 mb-3">
                   <FaWhatsapp className="text-green-600 text-2xl" />
@@ -842,7 +842,7 @@ const MyCourses = () => {
                 <p className="text-xs text-gray-400 mt-3 text-center">
                   💡 Get: Course Updates • Doubt Solving • Peer Learning • Job Alerts
                 </p>
-              </div>
+              </div> */}
 
               {/* Course Value Summary */}
               {stats.total > 0 && (
