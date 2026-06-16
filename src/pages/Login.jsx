@@ -310,55 +310,15 @@ const Login = () => {
 
 // Update handleStudentLogin function
 
-// const handleStudentLogin = async () => {
-//   try {
-//     setLoading(true);
-//     const response = await api.post('/api/auth/student/login', {
-//       email: formData.email,
-//       password: formData.password
-//     });
-    
-//     console.log('Student login response:', response.data);
-    
-//     if (response.data.access_token) {
-//       const studentData = {
-//         ...response.data.student,
-//         userType: 'student',
-//         role: 'student'
-//       };
-      
-//       // Login the user
-//       login(response.data.access_token, studentData, 'student');
-//       toast.success(`Welcome back, ${response.data.student.name}!`);
-      
-//       // ✅ Redirect to DASHBOARD (not home page)
-//       navigate('/dashboard');
-//     }
-//   } catch (error) {
-//     console.error('Student login error:', error);
-//     toast.error(
-//       error.response?.data?.error ||
-//       error.response?.data?.message ||
-//       'Login failed'
-//     );
-//   } finally {
-//     setLoading(false);
-//   }
-
-  // Login.jsx - handleStudentLogin me CORS handling
-
 const handleStudentLogin = async () => {
   try {
     setLoading(true);
-    
-    console.log('📤 Sending login request to:', `${api.defaults.baseURL}/api/auth/student/login`);
-    
     const response = await api.post('/api/auth/student/login', {
       email: formData.email,
       password: formData.password
     });
     
-    console.log('📥 Login response:', response.data);
+    console.log('Student login response:', response.data);
     
     if (response.data.access_token) {
       const studentData = {
@@ -367,45 +327,20 @@ const handleStudentLogin = async () => {
         role: 'student'
       };
       
+      // Login the user
       login(response.data.access_token, studentData, 'student');
       toast.success(`Welcome back, ${response.data.student.name}!`);
+      
+      // ✅ Redirect to DASHBOARD (not home page)
       navigate('/dashboard');
     }
   } catch (error) {
-    console.error('❌ Student login error:', error);
-    console.error('❌ Error config:', error.config);
-    console.error('❌ Error response:', error.response);
-    
-    // ✅ CORS specific error
-    if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
-      toast.error('Connection issue. Please check if backend is running.');
-      // ✅ Try direct URL as fallback
-      try {
-        console.log('🔄 Retrying with direct URL...');
-        const directResponse = await axios.post(
-          'https://sjs-backend-new.onrender.com/api/auth/student/login',
-          {
-            email: formData.email,
-            password: formData.password
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          }
-        );
-        console.log('📥 Direct response:', directResponse.data);
-        // Handle response...
-      } catch (retryError) {
-        console.error('❌ Retry failed:', retryError);
-        toast.error('Server not responding. Please try again later.');
-      }
-    } else if (error.response?.status === 401) {
-      toast.error(error.response?.data?.error || 'Invalid credentials');
-    } else {
-      toast.error(error.response?.data?.error || 'Login failed. Please try again.');
-    }
+    console.error('Student login error:', error);
+    toast.error(
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      'Login failed'
+    );
   } finally {
     setLoading(false);
   }
@@ -428,31 +363,20 @@ const handleStudentLogin = async () => {
 
   const handleAdminLogin = async () => {
   try {
-    console.log("🔄 Admin login attempt with:", { 
-      email: formData.email,
-      password: formData.password 
-    });
-    
     const response = await api.post('/api/auth/admin/login', {
       email: formData.email,
       password: formData.password
     });
     
-    console.log("📥 Admin login response:", response.data);
-    console.log("📥 requires_otp:", response.data?.requires_otp);
-    console.log("📥 session_id:", response.data?.session_id);
-    
-    if (response.data && response.data.requires_otp === true) {
-      console.log("✅ OTP Required - Opening Modal");
+    if (response.data.requires_otp) {
       setSessionId(response.data.session_id);
       setShowOtpModal(true);
       setTimer(60);
-      toast.success(response.data.message || 'OTP sent to your email');
+      toast.success(response.data.message);
       return;
     }
     
-    if (response.data && response.data.access_token) {
-      console.log("✅ Admin login successful");
+    if (response.data.access_token) {
       const adminData = {
         ...response.data.admin,
         userType: 'admin',
@@ -460,33 +384,22 @@ const handleStudentLogin = async () => {
       };
       
       login(response.data.access_token, adminData, 'admin');
-      toast.success(`Welcome, ${response.data.admin?.full_name || 'Admin'}!`);
+      toast.success(`Welcome, ${response.data.admin.full_name || 'Admin'}!`);
       navigate('/admin');
-    } else {
-      console.log("⚠️ Unexpected response format:", response.data);
-      toast.error('Unexpected response from server');
     }
   } catch (error) {
-    console.error('❌ Admin login error:', error);
-    console.error('❌ Error response:', error.response);
-    console.error('❌ Error status:', error.response?.status);
-    console.error('❌ Error data:', error.response?.data);
-    
-    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      toast.error('Request timeout. Please try again.');
-    } else if (error.response?.status === 401) {
-      toast.error(error.response?.data?.error || 'Invalid credentials');
-    } else if (error.response?.status === 500) {
-      toast.error('Server error. Please try again later.');
-    } else if (error.response?.data?.error) {
-      toast.error(error.response.data.error);
-    } else {
-      toast.error('Login failed. Please try again.');
-    }
+    console.error('Admin login error:', error);
+    toast.error(
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      'Login failed'
+    );
   }
 };
 
-// New function for OTP verification
+  // New function for OTP verification
+  // Update your handleVerifyOtp function
+
 const handleVerifyOtp = async () => {
   if (!otp || otp.length !== 6) {
     toast.error('Please enter 6-digit OTP');
@@ -497,7 +410,7 @@ const handleVerifyOtp = async () => {
   try {
     const endpoint = userType === 'student' ? '/api/auth/student/login' : '/api/auth/admin/login';
     
-    console.log('🔍 Verifying OTP with:', {
+    console.log('Verifying OTP with:', {
       email: formData.email,
       session_id: sessionId,
       otp_length: otp.length
@@ -510,9 +423,9 @@ const handleVerifyOtp = async () => {
       session_id: sessionId
     });
 
-    console.log('📥 OTP verification response:', response.data);
+    console.log('OTP verification response:', response.data);
 
-    if (response.data && response.data.access_token) {
+    if (response.data.access_token) {
       toast.success('Login successful!');
       setShowOtpModal(false);
       setOtp('');
@@ -542,18 +455,16 @@ const handleVerifyOtp = async () => {
         navigate('/admin');
       }
     } else {
-      toast.error(response.data?.error || 'Verification failed');
+      toast.error(response.data.error || 'Verification failed');
     }
   } catch (error) {
-    console.error('❌ OTP verification error - Full details:', error);
-    console.error('❌ Error response:', error.response);
-    console.error('❌ Error status:', error.response?.status);
-    console.error('❌ Error data:', error.response?.data);
+    console.error('OTP verification error - Full details:', error);
+    console.error('Error response:', error.response);
+    console.error('Error status:', error.response?.status);
+    console.error('Error data:', error.response?.data);
     
     // Better error messages
-    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      toast.error('Request timeout. Please try again.');
-    } else if (error.response?.status === 401) {
+    if (error.response?.status === 401) {
       toast.error(error.response?.data?.error || 'Invalid or expired OTP');
     } else if (error.response?.status === 500) {
       toast.error('Server error. Please try again.');
