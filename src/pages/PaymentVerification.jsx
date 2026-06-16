@@ -1066,6 +1066,7 @@ const PaymentVerification = () => {
                   <img
                     src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=gurmeetsingh1021981-1@okaxis&pn=SJS%20Global%20Tech&cu=INR"
                     alt="UPI QR Code"
+                    className="w-48 h-48 mx-auto"
                   />
                   <button
                     onClick={handleDownloadQR}
