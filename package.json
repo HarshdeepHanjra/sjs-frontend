@@ -1,7 +1,8 @@
 {
-  "name": "sjs-academy-frontend",
+  "name": "sjs-global-tech",
   "private": true,
   "version": "1.0.0",
+  "description": "SJS GLOBAL TECH - IT Training, Courses & Internships",
   "type": "module",
   "scripts": {
     "dev": "vite",
