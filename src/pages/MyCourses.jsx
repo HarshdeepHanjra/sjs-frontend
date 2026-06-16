@@ -9,10 +9,11 @@ import {
   FaBookOpen,
   FaRedo,
   FaArrowRight,
-  FaStar
+  FaStar,
 } from "react-icons/fa";
 import api from "../services/api";
 import toast from "react-hot-toast";
+import { FaWhatsapp, FaArrowRight, FaStar } from "react-icons/fa";
 
 const MyCourses = () => {
   const navigate = useNavigate();
@@ -24,6 +25,10 @@ const MyCourses = () => {
     total: 0,
     totalSpent: 0,
   });
+
+  const WHATSAPP_GROUP_LINK =
+    "https://chat.whatsapp.com/FmIIVkekb68LZV0rbKW8VN?s=cl&p=a&ilr=2&amv=2";
+  const WHATSAPP_NUMBER = "+91 9468088336";
 
   // ✅ FIXED: Added /api/ prefix to all endpoints
   const fetchMyCourses = async (silent = false) => {
@@ -44,20 +49,20 @@ const MyCourses = () => {
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
       let enrolledCourses = [];
-      
+
       // ✅ Try multiple endpoints to get enrolled courses (all with /api/ prefix)
       const endpoints = [
         "/api/user/enrolled-courses",
-        "/api/cart/my-courses", 
+        "/api/cart/my-courses",
         "/api/my-courses",
-        "/api/user/profile"
+        "/api/user/profile",
       ];
-      
+
       for (const endpoint of endpoints) {
         try {
           const response = await api.get(endpoint, config);
           console.log(`Response from ${endpoint}:`, response.data);
-          
+
           if (response.data.success) {
             // Handle different response formats
             if (response.data.courses) {
@@ -69,14 +74,17 @@ const MyCourses = () => {
               if (courseIds && courseIds.length > 0) {
                 const coursePromises = courseIds.map(async (courseId) => {
                   try {
-                    const courseRes = await api.get(`/api/courses/${courseId}`, config);
+                    const courseRes = await api.get(
+                      `/api/courses/${courseId}`,
+                      config,
+                    );
                     return courseRes.data;
                   } catch (err) {
                     return null;
                   }
                 });
                 const courseResults = await Promise.all(coursePromises);
-                enrolledCourses = courseResults.filter(c => c !== null);
+                enrolledCourses = courseResults.filter((c) => c !== null);
                 break;
               }
             }
@@ -85,7 +93,7 @@ const MyCourses = () => {
           console.log(`Endpoint ${endpoint} failed:`, err.message);
         }
       }
-      
+
       if (enrolledCourses.length === 0) {
         setCourses([]);
         setStats({ total: 0, totalSpent: 0 });
@@ -97,20 +105,23 @@ const MyCourses = () => {
         setRefreshing(false);
         return;
       }
-      
+
       console.log("Final enrolled courses:", enrolledCourses);
       setCourses(enrolledCourses);
-      
+
       // Calculate stats
-      const totalSpent = enrolledCourses.reduce((sum, course) => sum + (course.price || 0), 0);
-      
+      const totalSpent = enrolledCourses.reduce(
+        (sum, course) => sum + (course.price || 0),
+        0,
+      );
+
       setStats({
         total: enrolledCourses.length,
         totalSpent: totalSpent,
       });
-      
+
       setLastUpdated(new Date());
-      
+
       if (!silent && enrolledCourses.length > 0) {
         toast.success(`Loaded ${enrolledCourses.length} courses`);
       }
@@ -147,7 +158,8 @@ const MyCourses = () => {
     };
 
     window.addEventListener("paymentApproved", handlePaymentApproved);
-    return () => window.removeEventListener("paymentApproved", handlePaymentApproved);
+    return () =>
+      window.removeEventListener("paymentApproved", handlePaymentApproved);
   }, []);
 
   // Listen for course updates from admin panel
@@ -156,9 +168,10 @@ const MyCourses = () => {
       console.log("Courses updated event received");
       fetchMyCourses(true);
     };
-    
+
     window.addEventListener("coursesUpdated", handleCoursesUpdated);
-    return () => window.removeEventListener("coursesUpdated", handleCoursesUpdated);
+    return () =>
+      window.removeEventListener("coursesUpdated", handleCoursesUpdated);
   }, []);
 
   // Initial fetch
@@ -254,7 +267,8 @@ const MyCourses = () => {
                 No Courses Enrolled Yet
               </h3>
               <p className="text-gray-600 mb-6">
-                You haven't enrolled in any courses yet. Browse our courses and start learning!
+                You haven't enrolled in any courses yet. Browse our courses and
+                start learning!
               </p>
               <Link to="/courses">
                 <button className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors">
@@ -271,8 +285,12 @@ const MyCourses = () => {
                     className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                   >
                     <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-4 text-white">
-                      <h3 className="text-xl font-bold">{course.name || course.title}</h3>
-                      <p className="text-sm opacity-90">{course.duration || 'Self-paced'}</p>
+                      <h3 className="text-xl font-bold">
+                        {course.name || course.title}
+                      </h3>
+                      <p className="text-sm opacity-90">
+                        {course.duration || "Self-paced"}
+                      </p>
                     </div>
                     <div className="p-4">
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2">
@@ -289,7 +307,9 @@ const MyCourses = () => {
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1">
                             <FaStar className="text-yellow-400 text-sm" />
-                            <span className="text-sm text-gray-600">{course.rating || 4.5}</span>
+                            <span className="text-sm text-gray-600">
+                              {course.rating || 4.5}
+                            </span>
                           </div>
                           <Link to={`/course/${course.id}`}>
                             <button className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
@@ -300,7 +320,8 @@ const MyCourses = () => {
                       </div>
                       {course.enrolled_at && (
                         <p className="text-xs text-gray-400 mt-2">
-                          Enrolled: {new Date(course.enrolled_at).toLocaleDateString()}
+                          Enrolled:{" "}
+                          {new Date(course.enrolled_at).toLocaleDateString()}
                         </p>
                       )}
                     </div>
@@ -308,9 +329,54 @@ const MyCourses = () => {
                 ))}
               </div>
 
+              {/* ✅ WhatsApp Community Section - Added Below Course Summary */}
+              <div className="mt-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <FaWhatsapp className="text-green-600 text-2xl" />
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Join Our WhatsApp Community
+                  </h3>
+                </div>
+
+                <p className="text-gray-600 text-sm mb-4">
+                  Connect with fellow students, get instant course updates, and
+                  clear your doubts directly with our team!
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {/* ✅ Direct Join Group */}
+                  <button
+                    onClick={() => window.open(WHATSAPP_GROUP_LINK, "_blank")}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg transition flex items-center justify-center gap-2 font-medium"
+                  >
+                    <FaWhatsapp size={18} />
+                    Join WhatsApp Group
+                  </button>
+
+                  {/* ✅ Contact Admin to Add */}
+                  <button
+                    onClick={() =>
+                      window.open(
+                        `https://wa.me/${WHATSAPP_NUMBER}?text=Hi%20Team%2C%20I%20want%20to%20join%20the%20SJS%20Academy%20WhatsApp%20group.%20Please%20add%20me.`,
+                        "_blank",
+                      )
+                    }
+                    className="flex-1 bg-white border border-green-500 text-green-600 hover:bg-green-50 py-2.5 rounded-lg transition flex items-center justify-center gap-2 text-sm font-medium"
+                  >
+                    <FaWhatsapp size={16} />
+                    Contact Admin to Add
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-400 mt-3 text-center">
+                  💡 Get: Course Updates • Doubt Solving • Peer Learning • Job
+                  Alerts
+                </p>
+              </div>
+
               {/* Course Value Summary */}
               {stats.total > 0 && (
-                <div className="mt-8 bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-6">
+                <div className="mt-6 bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">
                     Course Investment Summary
                   </h3>
@@ -319,8 +385,8 @@ const MyCourses = () => {
                     <strong className="text-primary-600">
                       ₹{stats.totalSpent.toLocaleString()}
                     </strong>{" "}
-                    in your education. The skills you've gained have an estimated
-                    value of{" "}
+                    in your education. The skills you've gained have an
+                    estimated value of{" "}
                     <strong className="text-green-600">
                       ₹{(stats.totalSpent * 3).toLocaleString()}+
                     </strong>{" "}
