@@ -70,28 +70,14 @@ const Contact = () => {
       color: 'bg-blue-100 text-blue-600',
       action: () => window.location.href = 'mailto:sjsglobaltech@gmail.com'
     },
-    // {
-    //   icon: FaPhone,
-    //   title: 'Call Us',
-    //   details: ['+91 89500 26639','+91 94680 88336'],
-    //   color: 'bg-green-100 text-green-600',
-    //   action: () => window.location.href = 'tel:+918950026639'
-    // },
     {
       icon: FaPhone,
       title: 'Call Us',
-      details: [
-        {
-          number: '+91 89500 26639',
-          action: () => window.location.href = 'tel:+918950026639'
-        },
-        {
-          number: '+91 94680 88336',
-          action: () => window.location.href = 'tel:+919468088336'
-        }
-      ],
-      color: 'bg-green-100 text-green-600'
+      details: ['+91 89500 26639','+91 94680 88336'],
+      color: 'bg-green-100 text-green-600',
+      action: () => window.location.href = 'tel:+918950026639'
     },
+    
     {
       icon: FaWhatsapp,
       title: 'WhatsApp',
