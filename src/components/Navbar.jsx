@@ -240,9 +240,10 @@ const Navbar = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center">
   <img
-    src={logo}
+    src="https://res.cloudinary.com/dxxpeilta/image/upload/v1781887876/logo_chuwcl.png"
     alt="SJS Global Tech"
-    className="h-24 md:h-28 w-auto object-contain"
+    className="h-14 sm:h-16 md:h-20 lg:h-24 w-auto object-contain"
+    loading="eager"
   />
 </Link>
 

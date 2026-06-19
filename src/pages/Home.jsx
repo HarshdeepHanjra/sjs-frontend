@@ -354,7 +354,7 @@ const Home = () => {
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img 
-                  src="https://res.cloudinary.com/dxxpeilta/image/upload/f_auto,q_auto/MY_PIC_ceizfl.jpg" 
+                  src="https://res.cloudinary.com/dxxpeilta/image/upload/v1781888306/MY_PIC_tt2nst.png" 
                   alt="Founder" 
                   className="w-full h-auto"
                 />
