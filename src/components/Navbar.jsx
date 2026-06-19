@@ -827,16 +827,6 @@ const Navbar = () => {
     alt="SJS Global Tech"
     className="h-16 w-auto object-contain"
   />
-
-  <div>
-    <h1 className="text-2xl font-bold text-gray-900">
-      SJS GLOBAL TECH
-    </h1>
-
-    <p className="text-sm text-gray-500">
-      Empowering Futures Through Technology
-    </p>
-  </div>
 </Link>
 
             {/* Desktop Navigation - Only Public Links */}
