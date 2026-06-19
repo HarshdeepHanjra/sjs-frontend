@@ -597,6 +597,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/UserContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import logo from "../assets/logo.png";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -820,19 +821,21 @@ const Navbar = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3">
+            <Link to="/" className="flex items-center gap-3">
   <img
-    src="/logo.png"
+    src={logo}
     alt="SJS Global Tech"
-    className="h-12 w-auto"
+    className="h-16 w-auto object-contain"
   />
-  <div className="flex flex-col leading-tight">
-    <span className="text-xl font-bold text-gray-800">
+
+  <div>
+    <h1 className="text-2xl font-bold text-gray-900">
       SJS GLOBAL TECH
-    </span>
-    <span className="text-xs text-gray-500">
+    </h1>
+
+    <p className="text-sm text-gray-500">
       Empowering Futures Through Technology
-    </span>
+    </p>
   </div>
 </Link>
 
