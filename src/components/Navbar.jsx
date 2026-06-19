@@ -820,15 +820,21 @@ const Navbar = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary-600 to-primary-800 rounded-lg flex items-center justify-center">
-                <FaGraduationCap className="text-white text-sm" />
-              </div>
-              <div className="flex flex-col leading-tight">
-                <span className="text-lg font-bold text-gray-800">SJS</span>
-                <span className="text-xs text-gray-500 -mt-1">Global Tech</span>
-              </div>
-            </Link>
+            <Link to="/" className="flex items-center space-x-3">
+  <img
+    src="/logo.png"
+    alt="SJS Global Tech"
+    className="h-12 w-auto"
+  />
+  <div className="flex flex-col leading-tight">
+    <span className="text-xl font-bold text-gray-800">
+      SJS GLOBAL TECH
+    </span>
+    <span className="text-xs text-gray-500">
+      Empowering Futures Through Technology
+    </span>
+  </div>
+</Link>
 
             {/* Desktop Navigation - Only Public Links */}
             <div className="hidden md:flex items-center space-x-1">
